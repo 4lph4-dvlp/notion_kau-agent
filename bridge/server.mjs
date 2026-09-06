@@ -259,7 +259,7 @@ process.stdin.on('data', async (chunk) => {
         reply(id, {
           protocolVersion: params?.protocolVersion || '2024-11-05',
           capabilities: { tools: {} },
-          serverInfo: { name: 'figma-agent-bridge', version: '1.0.0' },
+          serverInfo: { name: 'notion_kau-agent-bridge', version: '1.0.0' },
         });
       } else if (method === 'tools/list') {
         reply(id, { tools: TOOLS });

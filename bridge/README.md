@@ -28,8 +28,8 @@ Figma 공식 MCP의 **월 20회 호출 한도**(Starter 플랜)를 우회하는 
 
 다시 등록해야 한다면:
 ```bash
-claude mcp add --scope user figma-bridge -- node "D:\대외활동\2026-2027 Notion Campust Leader\figma-agent\bridge\server.mjs"
-codex  mcp add            figma-bridge -- node "D:\대외활동\2026-2027 Notion Campust Leader\figma-agent\bridge\server.mjs"
+claude mcp add --scope user figma-bridge -- node "D:\대외활동\2026-2027 Notion Campust Leader\notion_kau-agent\bridge\server.mjs"
+codex  mcp add            figma-bridge -- node "D:\대외활동\2026-2027 Notion Campust Leader\notion_kau-agent\bridge\server.mjs"
 ```
 
 ### 2. Figma 플러그인 설치 — **사용자가 직접 해야 함**
@@ -39,7 +39,7 @@ codex  mcp add            figma-bridge -- node "D:\대외활동\2026-2027 Notion
 3. 메뉴 → `Plugins` → `Development` → **`Import plugin from manifest…`**
 4. 이 폴더의 `plugin/manifest.json` 을 고른다
    ```
-   D:\대외활동\2026-2027 Notion Campust Leader\figma-agent\bridge\plugin\manifest.json
+   D:\대외활동\2026-2027 Notion Campust Leader\notion_kau-agent\bridge\plugin\manifest.json
    ```
 5. `Plugins` → `Development` → **`Agent Bridge`** 실행
 

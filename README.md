@@ -1,6 +1,8 @@
-# figma-agent
+# notion_kau-agent
 
 > 🇰🇷 **한국어 문서: [README.ko.md](README.ko.md)**
+>
+> Repository: https://github.com/4lph4-dvlp/notion_kau-agent
 
 An agent-driven design system for running an Instagram account. AI agents (Claude Code,
 Codex, Antigravity) build and maintain reusable design assets in Figma, then assemble
@@ -119,7 +121,7 @@ The absolute path is needed when registering the MCP server, so note it:
 ```
 
 > In this repo's own setup that is
-> `D:\대외활동\2026-2027 Notion Campust Leader\figma-agent`.
+> `D:\대외활동\2026-2027 Notion Campust Leader\notion_kau-agent`.
 > Substitute your own path everywhere `<PROJECT>` appears.
 
 ### 4.2 Prepare the Figma file

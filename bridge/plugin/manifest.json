@@ -1,6 +1,6 @@
 {
   "name": "Agent Bridge",
-  "id": "figma-agent-bridge-local",
+  "id": "notion_kau-agent-bridge-local",
   "api": "1.0.0",
   "main": "code.js",
   "ui": "ui.html",

@@ -1,6 +1,8 @@
-# figma-agent
+# notion_kau-agent
 
 > 🇬🇧 **English: [README.md](README.md)**
+>
+> 저장소: https://github.com/4lph4-dvlp/notion_kau-agent
 
 인스타그램 계정 운영을 위한 에이전트 기반 디자인 시스템. AI 에이전트(Claude Code, Codex,
 Antigravity)가 Figma에 재사용 가능한 디자인 에셋을 만들고, 그 에셋으로 카드뉴스·포스트·
@@ -117,7 +119,7 @@ MCP 등록에 절대 경로가 필요하므로 경로를 확인해둔다.
 ```
 
 > 이 저장소의 실제 경로는
-> `D:\대외활동\2026-2027 Notion Campust Leader\figma-agent` 다.
+> `D:\대외활동\2026-2027 Notion Campust Leader\notion_kau-agent` 다.
 > `<PROJECT>`가 나오는 자리에 각자의 경로를 넣으면 된다.
 
 ### 4.2 Figma 파일 준비
