@@ -1,0 +1,72 @@
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    margin: 0; padding: 16px;
+    font: 12px/1.5 -apple-system, "Segoe UI", "Noto Sans KR", sans-serif;
+    color: #373530; background: #fff;
+  }
+  @media (prefers-color-scheme: dark) { body { color: #d4d4d4; background: #191919; } }
+  h1 { font-size: 13px; margin: 0 0 12px; font-weight: 700; }
+  .row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .dot { width: 8px; height: 8px; border-radius: 999px; background: #c4554d; flex: none; }
+  .dot.on { background: #548164; }
+  .muted { color: #787774; }
+  @media (prefers-color-scheme: dark) { .muted { color: #9b9b9b; } }
+  code { font-family: ui-monospace, Consolas, monospace; }
+</style>
+
+<h1>Agent Bridge</h1>
+<div class="row"><span class="dot" id="dot"></span><span id="state">연결 중…</span></div>
+<div class="muted" id="detail">http://localhost:3055</div>
+<div class="muted" id="count" style="margin-top:8px">실행한 작업 0건</div>
+<div class="muted" style="margin-top:10px">이 창을 닫으면 브리지가 끊긴다.</div>
+
+<script>
+  const BASE = 'http://localhost:3055';
+  const dot = document.getElementById('dot');
+  const state = document.getElementById('state');
+  const detail = document.getElementById('detail');
+  const countEl = document.getElementById('count');
+  let done = 0;
+
+  function setConnected(ok, note) {
+    dot.className = 'dot' + (ok ? ' on' : '');
+    state.textContent = ok ? '연결됨' : '서버 없음';
+    detail.textContent = note || BASE;
+  }
+
+  // 플러그인 샌드박스 → 브리지 서버
+  window.onmessage = async (e) => {
+    const m = e.data && e.data.pluginMessage;
+    if (!m || m.type !== 'result') return;
+    done++;
+    countEl.textContent = '실행한 작업 ' + done + '건';
+    try {
+      await fetch(BASE + '/agent/result', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(m.payload),
+      });
+    } catch (err) {
+      setConnected(false, '결과 전송 실패: ' + err.message);
+    }
+  };
+
+  // 브리지 서버 → 플러그인 샌드박스 (long-poll)
+  (async function loop() {
+    for (;;) {
+      try {
+        const r = await fetch(BASE + '/agent/poll');
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        setConnected(true);
+        const job = await r.json();
+        if (job && job.id) {
+          parent.postMessage({ pluginMessage: { type: 'run', id: job.id, code: job.code } }, '*');
+        }
+      } catch (err) {
+        setConnected(false, 'node bridge/server.mjs 를 실행할 것');
+        await new Promise((r) => setTimeout(r, 2000));
+      }
+    }
+  })();
+</script>

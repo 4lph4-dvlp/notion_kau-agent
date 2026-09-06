@@ -1,0 +1,14 @@
+{
+  "name": "Agent Bridge",
+  "id": "figma-agent-bridge-local",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": ["http://localhost:3055"],
+    "devAllowedDomains": ["http://localhost:3055"],
+    "reasoning": "로컬에서 실행 중인 에이전트 브리지와만 통신한다. 외부로 나가는 요청은 없다."
+  }
+}

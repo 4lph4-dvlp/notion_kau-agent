@@ -1,0 +1,299 @@
+{
+  "_note": "Figma 연결 후 에이전트가 채우고 갱신하는 레지스트리. 작업 시작 전 반드시 읽을 것.",
+  "fileKey": "l4iUTnc5fRX9vPDLSY8eDI",
+  "fileName": "Notion CL",
+  "fileUrl": "https://www.figma.com/design/l4iUTnc5fRX9vPDLSY8eDI/Notion-CL",
+  "pages": {
+    "assets": {
+      "name": "01_Assets",
+      "id": "23:15"
+    },
+    "workspace": {
+      "name": "02_Workspace",
+      "id": "0:1"
+    }
+  },
+  "variableCollections": {
+    "Core": {
+      "id": "VariableCollectionId:36:2",
+      "modes": [
+        "Default"
+      ],
+      "varCount": 55
+    }
+  },
+  "styles": {
+    "_note": "텍스트 7 / 페인트 38",
+    "text": [
+      "Display",
+      "Quote",
+      "Title",
+      "Subtitle",
+      "Body",
+      "Caption",
+      "Label"
+    ],
+    "fill": [
+      "BG/Default",
+      "BG/Subtle",
+      "BG/Warm",
+      "BG/Inverse",
+      "Text/Primary",
+      "Text/Secondary",
+      "Text/OnInverse",
+      "Text/OnInverseMuted",
+      "Line/Default",
+      "Line/Strong",
+      "Accent/*(9)",
+      "AccentBg/*(9)",
+      "AccentBgDark/*(9)"
+    ]
+  },
+  "fonts": {
+    "sansInstalled": false,
+    "serif": "Noto Serif KR",
+    "sans": "Noto Sans KR",
+    "_note": "Pretendard 미설치 → Noto Sans KR 로 구축됨. Nanum Myeongjo 도 없어 세리프는 Noto Serif KR 사용."
+  },
+  "components": {
+    "UI/Badge": {
+      "id": "39:21",
+      "key": "dd31a918126c4a973e7edb7c2256f80063170ccc",
+      "type": "COMPONENT_SET",
+      "props": [
+        "text",
+        "color"
+      ],
+      "variants": [
+        "color=blue",
+        "color=purple",
+        "color=orange",
+        "color=red",
+        "color=green",
+        "color=gray"
+      ]
+    },
+    "UI/Callout": {
+      "id": "39:40",
+      "key": "4724402e9bec8f051411bf684d33bad6bc2f478b",
+      "type": "COMPONENT_SET",
+      "props": [
+        "emoji",
+        "text",
+        "color",
+        "theme"
+      ],
+      "variants": [
+        "color=blue, theme=light",
+        "color=purple, theme=light",
+        "color=orange, theme=light",
+        "color=red, theme=light",
+        "color=green, theme=light",
+        "color=gray, theme=light",
+        "color=blue, theme=dark",
+        "color=purple, theme=dark",
+        "color=orange, theme=dark",
+        "color=red, theme=dark",
+        "color=green, theme=dark",
+        "color=gray, theme=dark"
+      ]
+    },
+    "UI/Logo": {
+      "id": "39:45",
+      "key": "f0ddd36f7a76e2d00318010b45dfc28257d0a7bb",
+      "type": "COMPONENT_SET",
+      "props": [
+        "handle",
+        "theme"
+      ],
+      "variants": [
+        "theme=light",
+        "theme=dark"
+      ],
+      "_note": "theme 는 배경색을 가리킨다. light=흰 배경. 심볼은 종이비행기 이미지를 알파 마스크로 써서 테마별로 색을 입힌다"
+    },
+    "ST/Base": {
+      "id": "43:32",
+      "key": "f5930aed2021b5b3db90f8459c367f87d605f758",
+      "type": "COMPONENT_SET",
+      "props": [
+        "title",
+        "body",
+        "showImage",
+        "theme"
+      ],
+      "variants": [
+        "theme=light",
+        "theme=dark"
+      ]
+    },
+    "UI/Divider": {
+      "id": "45:17",
+      "key": "1fcb07fcb729ae1e89dd8aac98c0f4634eba001e",
+      "type": "COMPONENT_SET",
+      "props": [
+        "theme"
+      ],
+      "variants": [
+        "theme=light",
+        "theme=dark"
+      ]
+    },
+    "UI/Tag": {
+      "id": "45:20",
+      "key": "ca9769b8c953399bad7d545f4024ef5db29c865d",
+      "type": "COMPONENT_SET",
+      "props": [
+        "text",
+        "theme"
+      ],
+      "variants": [
+        "theme=light",
+        "theme=dark"
+      ]
+    },
+    "UI/ProgressDots": {
+      "id": "45:25",
+      "key": "769d4892cee2a935f1fd244b3a2959b260ffc055",
+      "type": "COMPONENT_SET",
+      "props": [
+        "current",
+        "total",
+        "theme"
+      ],
+      "variants": [
+        "theme=light",
+        "theme=dark"
+      ]
+    },
+    "CN/Cover": {
+      "id": "47:43",
+      "key": "164787e5e59a7052025b89d32fc36c2992a09631",
+      "type": "COMPONENT_SET",
+      "props": [
+        "title",
+        "subtitle",
+        "showBadge",
+        "showImage",
+        "theme"
+      ],
+      "variants": [
+        "theme=light",
+        "theme=dark"
+      ]
+    },
+    "CN/Body": {
+      "id": "47:66",
+      "key": "4af292e98c8244996a737d515f242f9b01db64d2",
+      "type": "COMPONENT_SET",
+      "props": [
+        "title",
+        "body",
+        "showImage",
+        "showCallout",
+        "theme"
+      ],
+      "variants": [
+        "theme=light",
+        "theme=dark"
+      ]
+    },
+    "CN/Quote": {
+      "id": "47:73",
+      "key": "d6f1fcf91408f34dd4a515fef2095f5add984dcd",
+      "type": "COMPONENT_SET",
+      "props": [
+        "quote",
+        "source",
+        "showImage",
+        "theme"
+      ],
+      "variants": [
+        "theme=light",
+        "theme=dark"
+      ]
+    },
+    "CN/CTA": {
+      "id": "47:82",
+      "key": "9e2e26def3f971cd27f8c0ea5b7e703ff00ec399",
+      "type": "COMPONENT_SET",
+      "props": [
+        "headline",
+        "sub",
+        "showImage",
+        "theme"
+      ],
+      "variants": [
+        "theme=light",
+        "theme=dark"
+      ]
+    },
+    "PT/Single": {
+      "id": "47:93",
+      "key": "e20618805f36a5b56e1e1d061e27244e6acbeeb3",
+      "type": "COMPONENT_SET",
+      "props": [
+        "title",
+        "body",
+        "showImage",
+        "theme"
+      ],
+      "variants": [
+        "theme=light",
+        "theme=dark"
+      ]
+    }
+  },
+  "lastUpdated": "2026-09-07",
+  "logoMarks": {
+    "_note": "기존 로고 마크. UI/Logo 심볼로 쓸 수 있다.",
+    "Group 1": {
+      "id": "23:19",
+      "desc": "종이비행기 + 노션 N 큐브"
+    },
+    "Group 2": {
+      "id": "23:22",
+      "desc": "노션 큐브 + 9"
+    },
+    "Ellipse 1": {
+      "id": "23:18",
+      "desc": "원형"
+    }
+  },
+  "layout": {
+    "centerSquare": {
+      "inset": 135,
+      "note": "1080x1350 을 1:1 로 크롭하면 위아래 135px 이 잘린다. 4:5 카드의 세로 여백은 spacing/squareInset(135)"
+    },
+    "storyInset": 250,
+    "page": "01_Assets 는 행 단위로 정리돼 있다. 각 행 위에 § 로 시작하는 라벨 텍스트가 있다.",
+    "rows": [
+      "원본 소스(로고 이미지)",
+      "UI 부품",
+      "콜아웃",
+      "카드 4:5",
+      "스토리 9:16"
+    ],
+    "rowGap": 400,
+    "itemGap": 200,
+    "setPadding": 60,
+    "variantGrid": "색 축이 있으면 색=열/테마=행, 없으면 테마를 가로로. light 가 항상 먼저.",
+    "note": "컴포넌트 세트는 변형을 옮겨도 프레임이 자동으로 커지지 않는다. resizeWithoutConstraints 로 직접 맞춰야 한다.",
+    "contentAlign": "4:5 카드는 콘텐츠 덩어리를 중앙 정사각형(y 135~1215) 안에서 세로 중앙에 둔다. 푸터(로고)는 정사각형 하단, CN/Body 의 진행표시는 정사각형 상단에 고정.",
+    "imageSlot": "모든 카드에 showImage(BOOLEAN) 로 16:9(920x518) 슬롯이 있다. 기본 꺼짐. 배경은 light=BG/Subtle, dark=AccentBgDark/Gray, 반경 radius/md."
+  },
+  "brand": {
+    "handle": "@notion_kau",
+    "logoSymbol": {
+      "sourceNode": "23:21",
+      "name": "notion_kau-logo 1",
+      "kind": "IMAGE(투명 배경)",
+      "note": "벡터가 아니라 이미지다. 색을 바꾸려면 알파 마스크 방식을 써야 한다. UI/Logo 내부 symbol 프레임 참고",
+      "size": "34x32 (원본 274x256 비율 유지)"
+    },
+    "unusedMarks": {
+      "Group 2": "노션 큐브 + 9",
+      "Ellipse 1": "원형"
+    }
+  }
+}
