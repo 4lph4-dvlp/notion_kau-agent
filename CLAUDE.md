@@ -31,4 +31,6 @@
   `design/brand.md`의 규칙 안에서 해결한다.
 - 폰트는 **Noto Serif KR**(Display·Quote 전용) + **Noto Sans KR**(나머지) 두 가지뿐이다.
   Pretendard를 설치하면 본문용으로 교체할 수 있다. 그 외 폰트를 임의로 고르지 않는다.
-- `01_Assets`는 **이미 구축돼 있다.** 다시 만들지 말고 `design/figma-file.json`의 노드 ID를 쓴다.
+- `design/figma-file.json`에 컴포넌트 키가 채워져 있으면 `01_Assets`는 **이미 구축된 것이다.**
+  다시 만들지 말고 그 노드 ID를 쓴다. 레지스트리가 비어 있으면 자기 파일로 새로 구성하는
+  경우(README 4.2 경로 B)이므로 `/figma-assets`로 먼저 구축한다.

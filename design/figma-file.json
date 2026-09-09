@@ -1,5 +1,5 @@
 {
-  "_note": "Figma 연결 후 에이전트가 채우고 갱신하는 레지스트리. 작업 시작 전 반드시 읽을 것.",
+  "_note": "Figma 연결 후 에이전트가 채우고 갱신하는 레지스트리. 작업 시작 전 반드시 읽을 것. 공유 작업공간에 참여한 경우(README 4.2 경로 A) 이 값들을 바꾸지 말 것 — 전원이 같은 파일을 가리켜야 한다. 자기 파일로 새로 구성하는 경우(경로 B)에만 fileKey/fileName/fileUrl 을 교체하고 나머지는 비운다.",
   "fileKey": "l4iUTnc5fRX9vPDLSY8eDI",
   "fileName": "Notion CL",
   "fileUrl": "https://www.figma.com/design/l4iUTnc5fRX9vPDLSY8eDI/Notion-CL",

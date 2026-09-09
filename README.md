@@ -100,7 +100,7 @@ through the Figma **REST API** instead, which has its own separate (and generous
 |---|---|---|
 | **Node.js 18+** | runs the bridge and the export script | no `npm install` needed — zero dependencies |
 | **Figma desktop app** | the plugin only runs there | the browser version cannot run local dev plugins |
-| **A Figma account** | — | free Starter plan is enough |
+| **A Figma workspace** | assets and posts both live there | get invited to the shared file (A) or make your own (B) — [4.2](#42-choose-your-figma-workspace) |
 | At least one MCP client | Claude Code, Codex, or Antigravity | all three can be registered simultaneously |
 | Figma personal access token | PNG export via REST | free to create, see [4.5](#45-rest-api-token-env) |
 
@@ -120,41 +120,84 @@ The absolute path is needed when registering the MCP server, so note it:
 <PROJECT>/
 ```
 
-> In this repo's own setup that is
-> `D:\대외활동\2026-2027 Notion Campust Leader\notion_kau-agent`.
-> Substitute your own path everywhere `<PROJECT>` appears.
+> Everywhere `<PROJECT>` appears below, substitute **the path you cloned into**.
+> Print the absolute path from the project root:
+>
+> ```bash
+> pwd          # macOS · Linux · Git Bash
+> ```
+> ```powershell
+> $PWD.Path    # Windows PowerShell
+> ```
 
-### 4.2 Prepare the Figma file
+### 4.2 Choose your Figma workspace
 
-Create **one** Figma design file with **two pages**, named exactly:
+There are two ways to use this project. **Pick one now** — the choice carries through to
+4.5 (`.env`) and to what you do first.
+
+| | **A. Join a shared workspace** | **B. Set up your own** |
+|---|---|---|
+| When | joining a team file already in use | starting fresh in your own account |
+| Figma file | you get invited to the owner's | you create it |
+| `design/figma-file.json` | **leave it alone** | replace with your file's values |
+| `FIGMA_FILE_KEY` in `.env` | leave as is | your own file key |
+| `01_Assets` | already built | you build it with `figma-assets` |
+| First task | go straight to making a post | build assets → then make a post |
+
+Either way the structure is the same: **one file, two pages.**
 
 ```
-01_Assets
-02_Workspace
+01_Assets      ← the design system (master components · variables · styles)
+02_Workspace   ← the actual posts
 ```
 
 > **Do not split these into two files.** On the free plan you cannot publish a team
 > library, so components can only be shared inside a single file. One file, two pages.
 
-Then record the file key in `design/figma-file.json`. The key is the segment in the URL:
+#### A. Join a shared workspace
 
-```
-https://www.figma.com/design/<FILE_KEY>/<file-name>
-                             ^^^^^^^^^^
-```
+1. Ask the file owner to invite you with **can edit** access.
+   On their side the file must live **inside a project**, not in Drafts, for invites to be
+   possible ([section 9](#9-constraints-and-gotchas)).
+2. Accept the invite and open the file in the **Figma desktop app** (plugins only run there).
+3. Leave `design/figma-file.json` **untouched.** The file key, page IDs and component keys
+   are already there; changing them points you at a **different file** than everyone else.
 
-```jsonc
-{
-  "fileKey": "l4iUTnc5fRX9vPDLSY8eDI",
-  "fileName": "Notion CL",
-  "pages": {
-    "assets":    { "name": "01_Assets",    "id": "23:15" },
-    "workspace": { "name": "02_Workspace", "id": "0:1" }
-  }
-}
-```
+   ```jsonc
+   {
+     "fileKey": "l4iUTnc5fRX9vPDLSY8eDI",
+     "fileName": "Notion CL",
+     "pages": {
+       "assets":    { "name": "01_Assets",    "id": "23:15" },
+       "workspace": { "name": "02_Workspace", "id": "0:1" }
+     }
+   }
+   ```
+4. `01_Assets` is already built — **do not rebuild it.** Finish 4.3–4.5 and go straight to
+   [making a post](#8-making-a-post-end-to-end).
 
-Page IDs are filled in by the agent on first run — you only need `fileKey` to start.
+> Since several people share the file, rule 7 in `AGENTS.md` applies: never touch sections
+> you did not create.
+
+#### B. Set up your own workspace
+
+1. Create **one** Figma design file with **two pages** named exactly `01_Assets` and
+   `02_Workspace`.
+   If you plan to invite others later, create it **inside a project**, not in Drafts.
+2. Take the key out of the file URL:
+
+   ```
+   https://www.figma.com/design/<FILE_KEY>/<file-name>
+                                ^^^^^^^^^^
+   ```
+3. Point `design/figma-file.json` at your file: fill in `fileKey`, `fileName` and `fileUrl`,
+   and **empty out** the `pages` ids, `components`, `variableCollections` and `styles` —
+   the agent fills those in as it builds.
+4. Your `01_Assets` is empty, so **build the assets first.** Finish 4.3–4.5, run the
+   `figma-assets` skill ([6.3](#63-skills-all-three-agents)), then move on to posts.
+
+> `design/figma-file.json` is a committed file, so path B leaves a permanent local diff in
+> it. If you are running your own workspace long-term, **fork** the repo and commit there.
 
 ### 4.3 Register the MCP server
 
@@ -188,7 +231,7 @@ No CLI — edit the config file directly. Write to **both** of these (whichever 
 installed variant reads):
 
 ```
-~/.gemini/antigravity-ide/mcp_config.json
+~/.gemini/antigravity/mcp_config.json
 ~/.gemini/config/mcp_config.json
 ```
 
@@ -227,16 +270,20 @@ A red dot means the bridge server is not running — see [section 5](#5-running-
 Needed only for PNG export and file-structure reads. Both are independent of the bridge.
 
 1. Figma → account menu → `Settings` → `Security` → **Personal access tokens** → generate
-   one with **File content: Read**.
-2. Copy `.env.example` to `.env` and fill it in:
+   one with **File content: Read**. **Each person creates their own token.**
+2. Copy `.env.example` to `.env` and fill in the token:
 
 ```bash
 FIGMA_TOKEN=figd_xxxxxxxxxxxxxxxxxxxxx
-FIGMA_FILE_KEY=l4iUTnc5fRX9vPDLSY8eDI
+FIGMA_FILE_KEY=l4iUTnc5fRX9vPDLSY8eDI   # path A: leave as is / path B: your own file key
 ```
 
-> `FIGMA_FILE_KEY` is the **key only**, not the whole URL. `.env` is gitignored — never
-> commit it.
+> The token is **personal** — never share it. `FIGMA_FILE_KEY` must always match `fileKey`
+> in `design/figma-file.json`: unchanged on path A, both replaced with your own on path B.
+> `.env` is gitignored — never commit it.
+>
+> A token only reads files you have access to. A 403 from `--list` means either (A) you have
+> not been invited to the file yet, or (B) `FIGMA_FILE_KEY` is not your file's key.
 
 Verify:
 
@@ -359,12 +406,27 @@ node scripts/export-frames.mjs --ids 47:43,47:66 --out exports/tmp
 > Keep `--scale 1`. The frames are natively 1080px, which is exactly what Instagram
 > wants. Exporting at 2x only gets re-compressed and looks worse.
 
-### 6.3 Skills (Claude Code)
+### 6.3 Skills (all three agents)
 
 | Skill | Purpose |
 |---|---|
-| `/figma-assets` | build or modify the design system on `01_Assets` |
-| `/instagram-post <slug>` | turn a brief into finished cards on `02_Workspace` |
+| `figma-assets` | build or modify the design system on `01_Assets` |
+| `instagram-post <slug>` | turn a brief into finished cards on `02_Workspace` |
+
+How you invoke them differs per agent.
+
+| Agent | Skill location | How to call |
+|---|---|---|
+| Claude Code | `.claude/skills/` | `/figma-assets`, `/instagram-post <slug>` |
+| Codex | `.codex/skills/` | ask by name — "use the figma-assets skill to …" |
+| Antigravity | `.agents/skills/` | ask by name (discovered as a workspace skill) |
+
+**The procedure lives in exactly one place: `.claude/skills/<name>/SKILL.md`.** The Codex and
+Antigravity copies are **pointer skills** that tell the agent to read the canonical file. Edit the
+canonical file once and all three agents pick up the change.
+
+All three read the shared rules in `AGENTS.md` automatically (`CLAUDE.md` points Claude at it;
+Codex and Antigravity load `AGENTS.md` directly).
 
 ---
 
@@ -587,6 +649,9 @@ From `design/brand.md`:
 
 ## 8. Making a post, end to end
 
+> On path B your `01_Assets` is empty. Build it with the `figma-assets` skill before you
+> get here ([4.2](#42-choose-your-figma-workspace)).
+
 ### Step 1 — Write a brief
 
 `content/briefs/<slug>.md`. Copy `_example.md` as a starting point.
@@ -682,6 +747,10 @@ post file, done. Set `status: approved`.
 | Team library publishing | not available → Assets and Workspace **must** share one file |
 | Variable modes | one per collection → light/dark is done with **variants**, not modes |
 | REST API (read + image export) | works fine, separate limits |
+| Inviting editors | no seat limit, but **files sitting in Drafts cannot have editors invited** |
+
+> For several people to edit the same file, it must live **inside a project**. A file left in
+> Drafts can only be shared view-only. The owner should move it out of Drafts, then invite.
 
 ### Figma Plugin API
 

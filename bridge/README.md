@@ -18,28 +18,32 @@ Figma 공식 MCP의 **월 20회 호출 한도**(Starter 플랜)를 우회하는 
 
 ## 설치
 
-### 1. MCP 등록 — 완료됨
+### 1. MCP 등록
+
+에이전트마다 한 번씩. `server.mjs`의 **절대 경로**로 등록한다
+(`<PROJECT>` = 클론한 경로. 자세한 설명은 [`README.ko.md` 4.3](../README.ko.md#43-mcp-서버-등록)).
+
+```bash
+claude mcp add --scope user figma-bridge -- node "<PROJECT>/bridge/server.mjs"
+codex  mcp add            figma-bridge -- node "<PROJECT>/bridge/server.mjs"
+```
+
+Antigravity는 CLI가 없어서 설정 파일에 직접 쓴다. 등록 결과는 이 파일들에 남는다.
 
 | 에이전트 | 위치 |
 |---|---|
 | Claude Code | `~/.claude.json` (user 스코프) |
 | Codex | `~/.codex/config.toml` |
-| Antigravity | `~/.gemini/antigravity-ide/mcp_config.json`, `~/.gemini/config/mcp_config.json` |
-
-다시 등록해야 한다면:
-```bash
-claude mcp add --scope user figma-bridge -- node "D:\대외활동\2026-2027 Notion Campust Leader\notion_kau-agent\bridge\server.mjs"
-codex  mcp add            figma-bridge -- node "D:\대외활동\2026-2027 Notion Campust Leader\notion_kau-agent\bridge\server.mjs"
-```
+| Antigravity | `~/.gemini/antigravity/mcp_config.json`, `~/.gemini/config/mcp_config.json` |
 
 ### 2. Figma 플러그인 설치 — **사용자가 직접 해야 함**
 
 1. **Figma 데스크톱 앱**을 연다 (브라우저 아님)
-2. 작업할 파일(`Notion CL`)을 연다
+2. 작업할 Figma 파일을 연다
 3. 메뉴 → `Plugins` → `Development` → **`Import plugin from manifest…`**
 4. 이 폴더의 `plugin/manifest.json` 을 고른다
    ```
-   D:\대외활동\2026-2027 Notion Campust Leader\notion_kau-agent\bridge\plugin\manifest.json
+   <PROJECT>/bridge/plugin/manifest.json
    ```
 5. `Plugins` → `Development` → **`Agent Bridge`** 실행
 

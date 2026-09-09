@@ -98,7 +98,7 @@ client 하나가 스스로 승격한다.
 |---|---|---|
 | **Node.js 18+** | 브리지와 내보내기 스크립트 실행 | 의존성이 0이라 `npm install` 불필요 |
 | **Figma 데스크톱 앱** | 플러그인은 여기서만 실행된다 | 브라우저 버전은 로컬 개발 플러그인을 못 돌린다 |
-| **Figma 계정** | — | 무료 Starter로 충분 |
+| **Figma 작업공간** | 에셋과 게시물이 모두 여기 있다 | 공유 파일에 초대받거나(A), 직접 만든다(B) — [4.2](#42-figma-작업공간-정하기) |
 | MCP 클라이언트 최소 1개 | Claude Code, Codex, Antigravity | 셋 다 동시에 등록 가능 |
 | Figma 개인 액세스 토큰 | REST로 PNG 내보내기 | 무료, [4.5](#45-rest-api-토큰-env) 참고 |
 
@@ -118,41 +118,84 @@ MCP 등록에 절대 경로가 필요하므로 경로를 확인해둔다.
 <PROJECT>/
 ```
 
-> 이 저장소의 실제 경로는
-> `D:\대외활동\2026-2027 Notion Campust Leader\notion_kau-agent` 다.
-> `<PROJECT>`가 나오는 자리에 각자의 경로를 넣으면 된다.
+> 아래 문서에서 `<PROJECT>`가 나오는 자리에는 **각자 클론한 경로**를 넣는다.
+> 절대 경로는 프로젝트 루트에서 이렇게 확인한다.
+>
+> ```bash
+> pwd          # macOS · Linux · Git Bash
+> ```
+> ```powershell
+> $PWD.Path    # Windows PowerShell
+> ```
 
-### 4.2 Figma 파일 준비
+### 4.2 Figma 작업공간 정하기
 
-Figma 디자인 파일 **하나**를 만들고 페이지 **둘**을 정확히 이 이름으로 만든다.
+쓰는 방식이 두 가지다. **여기서 고른 경로가 4.5(`.env`)와 첫 작업 순서까지 이어지므로
+먼저 정한다.**
+
+| | **A. 공유 작업공간에 참여** | **B. 내 작업공간을 새로 구성** |
+|---|---|---|
+| 이럴 때 | 이미 운영 중인 팀 파일에 합류한다 | 내 계정에서 처음부터 시작한다 |
+| Figma 파일 | 소유자에게 초대받는다 | 직접 만든다 |
+| `design/figma-file.json` | **그대로 둔다** | 내 파일 값으로 교체한다 |
+| `.env`의 `FIGMA_FILE_KEY` | 그대로 둔다 | 내 파일 키로 교체한다 |
+| `01_Assets` | 이미 구축돼 있다 | `figma-assets`로 직접 구축한다 |
+| 첫 작업 | 바로 게시물 제작 | 에셋 구축 → 게시물 제작 |
+
+어느 쪽이든 **파일 하나에 페이지 둘**이라는 구조는 같다.
 
 ```
-01_Assets
-02_Workspace
+01_Assets      ← 디자인 시스템 (마스터 컴포넌트 · 변수 · 스타일)
+02_Workspace   ← 실제 게시물
 ```
 
 > **두 파일로 나누지 말 것.** 무료 플랜은 팀 라이브러리 게시가 안 되므로 컴포넌트를
 > 파일 간에 공유할 수 없다. 한 파일, 두 페이지다.
 
-그다음 `design/figma-file.json`에 파일 키를 적는다. 키는 URL의 이 부분이다.
+#### A. 공유 작업공간에 참여
 
-```
-https://www.figma.com/design/<FILE_KEY>/<파일명>
-                             ^^^^^^^^^^
-```
+1. 파일 소유자에게 **편집(can edit) 권한**으로 초대를 받는다.
+   소유자 쪽에서는 파일이 Drafts가 아니라 **프로젝트 안**에 있어야 초대할 수 있다
+   ([9장](#9-제약과-함정)).
+2. 초대를 수락하고 **Figma 데스크톱 앱**에서 파일을 연다 (플러그인은 데스크톱에서만 돈다).
+3. `design/figma-file.json`은 **손대지 않는다.** 파일 키·페이지 ID·컴포넌트 키가 이미
+   들어 있고, 이 값을 바꾸면 다른 참여자와 **다른 파일**을 보게 된다.
 
-```jsonc
-{
-  "fileKey": "l4iUTnc5fRX9vPDLSY8eDI",
-  "fileName": "Notion CL",
-  "pages": {
-    "assets":    { "name": "01_Assets",    "id": "23:15" },
-    "workspace": { "name": "02_Workspace", "id": "0:1" }
-  }
-}
-```
+   ```jsonc
+   {
+     "fileKey": "l4iUTnc5fRX9vPDLSY8eDI",
+     "fileName": "Notion CL",
+     "pages": {
+       "assets":    { "name": "01_Assets",    "id": "23:15" },
+       "workspace": { "name": "02_Workspace", "id": "0:1" }
+     }
+   }
+   ```
+4. `01_Assets`는 이미 구축돼 있다. **다시 만들지 않는다.** 4.3~4.5를 끝내고 바로
+   게시물 제작([8장](#8-실제-게시물-만들기))으로 간다.
 
-페이지 ID는 에이전트가 첫 실행 때 채운다. 시작할 때는 `fileKey`만 있으면 된다.
+> 한 파일을 여럿이 쓰므로 `AGENTS.md` 절대 규칙 7번(내가 만들지 않은 섹션은 건드리지
+> 않는다)이 적용된다.
+
+#### B. 내 작업공간을 새로 구성
+
+1. Figma에서 디자인 파일 **하나**를 만들고, 페이지 **둘**을 정확히 `01_Assets`,
+   `02_Workspace`로 이름 짓는다.
+   나중에 다른 사람을 부를 생각이면 Drafts가 아니라 **프로젝트 안**에 만든다.
+2. 파일 URL에서 키를 꺼낸다.
+
+   ```
+   https://www.figma.com/design/<FILE_KEY>/<파일명>
+                                ^^^^^^^^^^
+   ```
+3. `design/figma-file.json`을 내 파일 기준으로 바꾼다. `fileKey`·`fileName`·`fileUrl`만
+   채우고 `pages`의 `id`, `components`, `variableCollections`, `styles`는 **비워둔다.**
+   에이전트가 만들면서 채운다.
+4. `01_Assets`가 비어 있으므로 **에셋부터 구축한다.** 4.3~4.5를 끝낸 뒤 `figma-assets`
+   스킬을 실행하고([6.3](#63-스킬-세-에이전트-공통)), 그다음 게시물 제작으로 간다.
+
+> `design/figma-file.json`은 저장소에 커밋된 파일이다. 경로 B로 쓰면 이 파일에 로컬 변경이
+> 계속 남는다. 개인용으로 이어갈 거라면 저장소를 **포크**해서 자기 쪽에 커밋하는 편이 낫다.
 
 ### 4.3 MCP 서버 등록
 
@@ -186,7 +229,7 @@ CLI가 없어서 설정 파일을 직접 고친다. 설치된 버전에 따라 �
 **둘 다** 쓴다.
 
 ```
-~/.gemini/antigravity-ide/mcp_config.json
+~/.gemini/antigravity/mcp_config.json
 ~/.gemini/config/mcp_config.json
 ```
 
@@ -225,16 +268,20 @@ CLI가 없어서 설정 파일을 직접 고친다. 설치된 버전에 따라 �
 PNG 내보내기와 파일 구조 조회에만 필요하다. 둘 다 브리지와 무관하게 동작한다.
 
 1. Figma → 계정 메뉴 → `Settings` → `Security` → **Personal access tokens** →
-   **File content: Read** 권한으로 발급.
-2. `.env.example`을 `.env`로 복사하고 채운다.
+   **File content: Read** 권한으로 발급. **토큰은 각자 자기 계정에서 만든다.**
+2. `.env.example`을 `.env`로 복사하고 토큰만 채운다.
 
 ```bash
 FIGMA_TOKEN=figd_xxxxxxxxxxxxxxxxxxxxx
-FIGMA_FILE_KEY=l4iUTnc5fRX9vPDLSY8eDI
+FIGMA_FILE_KEY=l4iUTnc5fRX9vPDLSY8eDI   # A: 그대로 둔다 / B: 내 파일 키로 바꾼다
 ```
 
-> `FIGMA_FILE_KEY`는 URL 전체가 아니라 **키만** 넣는다. `.env`는 gitignore 대상이니
-> 절대 커밋하지 말 것.
+> 토큰은 **개인 것**이라 공유하지 않는다. `FIGMA_FILE_KEY`는 `design/figma-file.json`의
+> `fileKey`와 **항상 같은 값**이어야 한다 — 경로 A면 그대로, 경로 B면 둘 다 내 키로 바꾼다.
+> `.env`는 gitignore 대상이니 절대 커밋하지 말 것.
+>
+> 토큰은 **내가 접근 권한을 가진 파일만** 읽는다. `--list`가 403이면 (A) 아직 파일에
+> 초대되지 않았거나 (B) `FIGMA_FILE_KEY`가 내 파일 키가 아니다.
 
 확인:
 
@@ -356,12 +403,27 @@ node scripts/export-frames.mjs --ids 47:43,47:66 --out exports/tmp
 > `--scale 1`을 유지할 것. 프레임이 원래 1080px이고 인스타가 원하는 크기가 정확히
 > 그것이다. 2배로 뽑으면 재압축만 거쳐 오히려 나빠진다.
 
-### 6.3 스킬 (Claude Code)
+### 6.3 스킬 (세 에이전트 공통)
 
 | 스킬 | 용도 |
 |---|---|
-| `/figma-assets` | `01_Assets`의 디자인 시스템 구축·수정 |
-| `/instagram-post <slug>` | 브리프를 받아 `02_Workspace`에 카드 제작 |
+| `figma-assets` | `01_Assets`의 디자인 시스템 구축·수정 |
+| `instagram-post <slug>` | 브리프를 받아 `02_Workspace`에 카드 제작 |
+
+호출 방법은 에이전트마다 다르다.
+
+| 에이전트 | 스킬 위치 | 부르는 법 |
+|---|---|---|
+| Claude Code | `.claude/skills/` | `/figma-assets`, `/instagram-post <slug>` |
+| Codex | `.codex/skills/` | "figma-assets 스킬로 …" 처럼 이름으로 지시 |
+| Antigravity | `.agents/skills/` | 이름으로 지시 (워크스페이스 스킬로 자동 발견) |
+
+**절차의 정본은 `.claude/skills/<이름>/SKILL.md` 하나뿐이다.** Codex·Antigravity 쪽에는
+같은 이름의 **포인터 스킬**만 두고 정본을 읽게 한다. 절차를 바꿀 때는 정본 한 곳만 고치면
+세 에이전트에 동시에 반영된다.
+
+공용 규칙 `AGENTS.md`는 세 에이전트 모두 자동으로 읽는다 (Claude는 `CLAUDE.md`가
+`AGENTS.md`를 가리키고, Codex와 Antigravity는 `AGENTS.md`를 직접 읽는다).
 
 ---
 
@@ -580,6 +642,9 @@ node scripts/export-frames.mjs --ids 47:43,47:66 --out exports/tmp
 
 ## 8. 실제 게시물 만들기
 
+> 경로 B로 시작했다면 `01_Assets`가 비어 있다. 여기 오기 전에 `figma-assets` 스킬로
+> 에셋을 먼저 구축한다 ([4.2](#42-figma-작업공간-정하기)).
+
 ### 1단계 — 브리프 작성
 
 `content/briefs/<slug>.md`. `_example.md`를 복사해서 시작하면 된다.
@@ -675,6 +740,10 @@ PNG가 `exports/<slug>/`에 순서대로 저장된다. 업로드하고, 포스�
 | 팀 라이브러리 게시 | 불가 → Assets와 Workspace가 **반드시** 한 파일에 있어야 한다 |
 | 변수 모드 | 컬렉션당 1개 → 라이트/다크를 모드가 아니라 **변형**으로 처리 |
 | REST API (읽기 + 이미지 내보내기) | 정상 동작, 별도 한도 |
+| 편집자 초대 | 인원 제한 없음. 단 **드래프트(Drafts)에 있는 파일은 편집자를 초대할 수 없다** |
+
+> 여러 명이 같이 편집하려면 파일이 **프로젝트 안**에 있어야 한다. 드래프트에 둔 파일은
+> 보기 링크만 공유된다. 소유자는 파일을 드래프트에서 프로젝트로 옮긴 뒤 초대할 것.
 
 ### Figma Plugin API
 
