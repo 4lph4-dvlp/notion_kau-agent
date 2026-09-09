@@ -65,25 +65,29 @@ Notion은 텍스트/배경 각각에 **10색**(기본 + 9색)을 라이트·다�
 
 ## 3. 타이포그래피
 
-Notion의 전략은 **세리프 헤드라인 + 산세리프 본문**이다.
+Notion의 전략은 **세리프 헤드라인(마케팅) + 산세리프 본문(제품 UI)**이다.
+**이 프로젝트는 산세리프 한 벌만 쓴다.** 인스타그램 카드뉴스는 마케팅 지면보다 제품 톤에
+가깝다고 보고 세리프를 뺐다. 위계는 서체가 아니라 **웨이트와 크기**로 만든다.
 
 | Notion | 원본 서체 | 한글 대응 (이 프로젝트) | 상태 |
 |---|---|---|---|
-| 마케팅 헤드라인·에디토리얼 | **Lyon** (Commercial Type, 유료) | **Noto Serif KR** | ✅ 사용 중 |
 | 제품 UI·본문 | **Inter** | **Pretendard** (메트릭 동일) | ❌ 미설치 |
-| 본문 (현재) | — | **Noto Sans KR** | ✅ 사용 중 |
+| 전 스타일 (현재) | — | **Noto Sans KR** | ✅ 사용 중 |
+| 마케팅 헤드라인 | **Lyon** (Commercial Type, 유료) | — | ⛔ 쓰지 않음 |
 
-- Lyon은 유료 라이선스라 쓰지 않는다. 한글 카드뉴스이므로 어차피 한글 세리프가 필요하다.
-  Nanum Myeongjo는 이 Figma 환경에 없어서 **Noto Serif KR**(7웨이트)로 확정했다.
-  Noto Sans KR과 같은 패밀리라 조판이 자연스럽게 맞는다.
+- Lyon은 유료 라이선스라 애초에 쓸 수 없다. 대체 명조(Noto Serif KR)를 `Display`·`Quote`에
+  쓰던 시기가 있었으나 **2026-09-09에 전부 Noto Sans KR로 통일했다.** 두 서체를 섞을 만큼
+  지면이 길지 않고, 노션 제품 톤과도 산세리프가 맞는다.
 - **Pretendard는 Google Fonts에 없다.** [GitHub](https://github.com/orioncactus/pretendard)에서
   받아 Windows에 설치한 뒤 **Figma 데스크톱 앱**에서 써야 한다.
   설치하면 `tokens.json`의 `family.sans`를 `Pretendard`로 바꾸고 텍스트 스타일 7개만
   다시 만들면 컴포넌트 전체에 자동 반영된다.
-- Noto Sans KR에는 **SemiBold(600)·ExtraBold(800)가 없다.** 실제 적용값은
+- Noto Sans KR의 사용 가능 웨이트는 `Thin` `Light` `DemiLight` `Regular` `Medium`
+  `Bold` `Black` 이다. **SemiBold(600)·ExtraBold(800)는 없다.** 실제 적용값은
   `tokens.json`의 `figmaStyle` 필드이고, 이 값을 임의로 바꾸면 폰트 로드가 실패한다.
-- 세리프는 **표지 대제목(`Display`)과 인용(`Quote`)에만** 쓴다. 본문에 세리프를 쓰면
-  가독성이 떨어지고 노션 톤에서도 벗어난다.
+- **세리프를 다시 들이지 않는다.** 표지 대제목은 `Display`(Black 88), 본문 카드 제목은
+  `Title`(Bold 60)로 무게와 크기를 벌려 구분하고, 인용은 `Quote`(Light 52)와 좌측 괘선·
+  색으로 구분한다.
 - Notion 본문 행간은 **1.5**다. `Body` 스타일이 이를 그대로 따른다. 임의로 좁히지 않는다.
 
 ---

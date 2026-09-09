@@ -47,12 +47,14 @@
 `tokens.json`의 `typography.style` 7개를 그대로 텍스트 스타일로 만든다.
 이름: `Display` · `Quote` · `Title` · `Subtitle` · `Body` · `Caption` · `Label`
 
-- 각 스타일의 `family` 키(`serif` / `sans`)를 `typography.family`에서 실제 폰트명으로 치환하고,
-  스타일명은 **`figmaStyle` 필드를 그대로** 쓴다. 추측한 이름(`SemiBold` vs `Semi Bold`)을 쓰면
-  폰트 로드가 실패한다.
-  - `serif` → **Noto Serif KR** (Display, Quote 전용)
-  - `sans` → **Noto Sans KR**. Pretendard가 설치되면 그쪽으로 교체한다.
-- 폰트가 없다고 임의의 다른 폰트로 대체하지 않는다. 위 두 가지 외의 선택지는 없다.
+- 각 스타일의 `family` 키를 `typography.family`에서 실제 폰트명으로 치환하고, 스타일명은
+  **`figmaStyle` 필드를 그대로** 쓴다. 추측한 이름(`SemiBold` vs `Semi Bold`)을 쓰면 폰트
+  로드가 실패한다.
+  - `sans` → **Noto Sans KR**. 7개 스타일 전부 이 하나를 쓴다. Pretendard가 설치되면
+    그쪽으로 교체한다.
+- **세리프는 쓰지 않는다.** 위계는 서체가 아니라 웨이트와 크기로 만든다
+  (`Display` Black 88 ↔ `Title` Bold 60).
+- 폰트가 없다고 임의의 다른 폰트로 대체하지 않는다. Noto Sans KR 외의 선택지는 없다.
 - 크기·굵기·행간·자간은 토큰 값을 그대로 적용한다. `Body`의 행간 1.5는 노션 본문 규격이므로
   레이아웃이 넘친다고 좁히지 않는다. 대신 **글자 수를 줄인다.**
 
@@ -132,7 +134,7 @@ AccentBg/Blue … AccentBg/Red      color/accentBg/*    (9개)
 ### `CN/Cover` — 표지
 - 배경 `BG/Inverse`(#191919), 제목 `text/onInverse`, 부제 `text/onInverseMuted`
 - 구성: `top`(FILL + CENTER) → 하단 `footer`
-  - `top`: `UI/Badge` → 제목(**`Display` = 명조**, 최대 3줄) → 부제(`Subtitle`, 최대 2줄) → `[imageSlot]`
+  - `top`: `UI/Badge` → 제목(**`Display` = Black 88**, 최대 3줄) → 부제(`Subtitle`, 최대 2줄) → `[imageSlot]`
   - `footer`: `UI/Logo` + "넘겨보기 →" (정사각형 하단 1215에 고정)
 - 프로퍼티: `title`, `subtitle`(TEXT), `showBadge`, `showImage`(BOOLEAN), `theme`
 - `showImage` 를 켜면 부제 아래에 16:9 슬롯이 나온다. 이때 제목은 2줄까지가 안전하다.
@@ -150,7 +152,7 @@ AccentBg/Blue … AccentBg/Red      color/accentBg/*    (9개)
 - `showCallout`이 true면 본문 아래에 `UI/Callout` 하나.
 
 ### `CN/Quote` — 인용/강조
-- 배경 `BG/Warm`(#F7F6F3). 인용문(**`Quote` = 명조**) + 출처(`Caption`, `Text/Secondary`).
+- 배경 `BG/Warm`(#F7F6F3). 인용문(**`Quote` = Light 52**) + 출처(`Caption`, `Text/Secondary`).
 - 좌측에 세로 라인(4px, `Line/Strong`)을 두는 노션 인용 블록 형태.
 - 카드 루트가 CENTER 정렬이라 인용문이 정사각형 한가운데 온다. 로고 없음.
 - `dark` 배경은 `BG/Inverse`(`BG/Warm` 의 다크 대응이 없다), 세로선은 `Text/OnInverse`.
@@ -186,7 +188,7 @@ AccentBg/Blue … AccentBg/Red      color/accentBg/*    (9개)
 - [ ] 모든 프레임이 정확히 1080 × 1350 (스토리는 1080 × 1920)
 - [ ] 색·간격이 변수를 참조하는가 (하드코딩된 hex가 없는가)
 - [ ] 텍스트가 스타일을 참조하는가
-- [ ] `Display`·`Quote`만 명조이고 나머지는 고딕인가
+- [ ] 7개 스타일이 전부 Noto Sans KR 인가 (세리프가 섞이지 않았는가)
 - [ ] `Body` 행간이 1.5인가 (임의로 좁히지 않았는가)
 - [ ] 그림자·그라디언트·불필요한 테두리가 없는가 (노션 톤 위반)
 - [ ] 오토레이아웃에서 텍스트 최대 줄 수를 넘겼을 때 프레임이 커지지 않고 잘리는가

@@ -9,7 +9,7 @@ Codex, Antigravity) build and maintain reusable design assets in Figma, then ass
 consistent carousel/post/story cards from those assets.
 
 Built for a **Notion Campus Leader** account, so the visual language follows Notion's
-brand: warm neutrals, serif headlines, generous whitespace, no decoration.
+brand: warm neutrals, a single sans typeface, generous whitespace, no decoration.
 
 ---
 
@@ -104,8 +104,8 @@ through the Figma **REST API** instead, which has its own separate (and generous
 | At least one MCP client | Claude Code, Codex, or Antigravity | all three can be registered simultaneously |
 | Figma personal access token | PNG export via REST | free to create, see [4.5](#45-rest-api-token-env) |
 
-Korean text rendering uses **Noto Sans KR** and **Noto Serif KR**, both bundled with
-Figma. Nothing to install. (See [7.2](#72-design-tokens) for the optional Pretendard upgrade.)
+Korean text is set in **Noto Sans KR** alone — bundled with Figma, nothing to install.
+(See [7.2](#72-design-tokens) for the optional Pretendard upgrade.)
 
 ---
 
@@ -440,7 +440,7 @@ Read these in order when you are new. `AGENTS.md` is the one agents must follow.
 |---|---|
 | **`AGENTS.md`** | **The rules all agents obey.** Hard constraints, workflow, naming. Start here. |
 | `CLAUDE.md` | Claude Code entry point; points at `AGENTS.md` plus a quick reference table |
-| `design/brand.md` | **Why** the colors and typefaces are what they are. Notion's palette, the serif/sans strategy, and an explicit table of what is Notion-derived vs. not |
+| `design/brand.md` | **Why** the colors and typefaces are what they are. Notion's palette, the single-sans decision, and an explicit table of what is Notion-derived vs. not |
 | `design/tokens.json` | **The source of truth for values.** Colors, type scale, spacing, radii, canvas sizes, safe areas. Figma variables are generated from this |
 | `design/design-system.md` | Component-by-component spec for `01_Assets`: structure, properties, build order, review checklist |
 | `design/formats.md` | Per-format rules: canvas sizes, safe areas, the center-square law, category accent colors, copy length limits, voice |
@@ -503,19 +503,20 @@ and a dark background:
 #### Typography
 
 Notion pairs a **serif for marketing headlines** (Lyon) with a **sans for product UI**
-(Inter). This project maps that to Korean:
+(Inter). Carousels read closer to product than to marketing, so this project uses **one sans
+throughout** and builds hierarchy from weight and size rather than from a second typeface:
 
 | Notion | Original | Here |
 |---|---|---|
-| Editorial headlines | Lyon (commercial license) | **Noto Serif KR** |
-| Product / body | Inter | **Noto Sans KR** |
+| Product / body | Inter | **Noto Sans KR** (every style) |
+| Editorial headlines | Lyon (commercial license) | not used |
 
 Seven text styles:
 
 | Style | Family | Figma style | Size | Line height | Tracking | Used for |
 |---|---|---|---|---|---|---|
-| `Display` | serif | SemiBold | 88 | 1.2 | −2% | cover headline, max 3 lines |
-| `Quote` | serif | Regular | 52 | 1.5 | −1% | pull quotes |
+| `Display` | sans | Black | 88 | 1.2 | −2% | cover headline, max 3 lines |
+| `Quote` | sans | Light | 52 | 1.5 | −1% | pull quotes |
 | `Title` | sans | Bold | 60 | 1.3 | −2% | body-card heading, max 2 lines |
 | `Subtitle` | sans | Medium | 40 | 1.4 | −2% | cover subheading, story body |
 | `Body` | sans | Regular | 34 | 1.5 | −1% | body copy |
@@ -565,8 +566,8 @@ All twelve are variant sets on `01_Assets`. Node IDs live in `design/figma-file.
 | `PT/Single` | 1080×1350 | `title`, `body`, `showImage`, `theme` |
 | `ST/Base` | 1080×1920 | `title`, `body`, `showImage`, `theme` |
 
-- `CN/Cover` — carousel cover. Serif `Display` headline on a badge. Keep the title under
-  20 characters.
+- `CN/Cover` — carousel cover. `Display` (Black 88) headline on a badge. Keep the title
+  under 20 characters.
 - `CN/Body` — the workhorse. Progress counter pinned top, content centered, logo bottom.
   `showCallout` adds a Notion-style callout block under the body.
 - `CN/Quote` — a pull quote with a left rule, vertically centered. No logo.
@@ -640,7 +641,7 @@ From `design/brand.md`:
 - Paper-like warm neutrals. No pure black or pure gray in body text.
 - **No shadows, no gradients, no heavy borders.** Hierarchy comes from type and space.
 - Color is used to mark meaning, never to decorate. One accent per post.
-- Serif is for `Display` and `Quote` only. Serif body copy is neither readable nor on-brand.
+- One typeface: Noto Sans KR. Hierarchy comes from weight (Black/Bold/Regular/Light) and size.
 - Voice: declarative and short. Say the outcome, not the feature. No clickbait.
 - **Do not draw or recreate Notion's logo.** Cards carry the account's own mark.
   If the Campus Leader program publishes ambassador brand rules, those take precedence.

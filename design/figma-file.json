@@ -51,9 +51,8 @@
   },
   "fonts": {
     "sansInstalled": false,
-    "serif": "Noto Serif KR",
     "sans": "Noto Sans KR",
-    "_note": "Pretendard 미설치 → Noto Sans KR 로 구축됨. Nanum Myeongjo 도 없어 세리프는 Noto Serif KR 사용."
+    "_note": "Pretendard 미설치 → Noto Sans KR 로 구축됨. 세리프는 쓰지 않는다 — Display/Quote 도 2026-09-09 에 Noto Sans KR(Black/Light)로 통일했다."
   },
   "components": {
     "UI/Badge": {

@@ -9,7 +9,7 @@ Antigravity)가 Figma에 재사용 가능한 디자인 에셋을 만들고, 그 
 스토리를 일관되게 조립한다.
 
 **Notion Campus Leader** 계정용으로 만들었기 때문에 시각 언어는 노션 브랜드를 따른다 —
-따뜻한 무채색, 세리프 헤드라인, 넉넉한 여백, 장식 없음.
+따뜻한 무채색, 산세리프 한 벌, 넉넉한 여백, 장식 없음.
 
 ---
 
@@ -102,8 +102,8 @@ client 하나가 스스로 승격한다.
 | MCP 클라이언트 최소 1개 | Claude Code, Codex, Antigravity | 셋 다 동시에 등록 가능 |
 | Figma 개인 액세스 토큰 | REST로 PNG 내보내기 | 무료, [4.5](#45-rest-api-토큰-env) 참고 |
 
-한글은 **Noto Sans KR**과 **Noto Serif KR**로 조판한다. 둘 다 Figma 기본 제공이라 설치할
-게 없다. (Pretendard 업그레이드는 [7.2](#72-디자인-토큰) 참고)
+한글은 **Noto Sans KR** 한 벌로 조판한다. Figma 기본 제공이라 설치할 게 없다.
+(Pretendard 업그레이드는 [7.2](#72-디자인-토큰) 참고)
 
 ---
 
@@ -437,7 +437,7 @@ node scripts/export-frames.mjs --ids 47:43,47:66 --out exports/tmp
 |---|---|
 | **`AGENTS.md`** | **모든 에이전트가 지키는 규칙.** 절대 규칙, 워크플로, 네이밍. 여기서 시작 |
 | `CLAUDE.md` | Claude Code 진입점. `AGENTS.md`를 가리키고 빠른 참조표를 담는다 |
-| `design/brand.md` | 색과 서체가 **왜** 이 값인지. 노션 팔레트, 세리프/산세리프 전략, 그리고 노션에서 온 것과 아닌 것을 구분한 표 |
+| `design/brand.md` | 색과 서체가 **왜** 이 값인지. 노션 팔레트, 산세리프 단일 서체 방침, 그리고 노션에서 온 것과 아닌 것을 구분한 표 |
 | `design/tokens.json` | **값의 원본.** 색, 타입 스케일, 간격, 반경, 캔버스 크기, 안전영역. Figma 변수가 여기서 생성된다 |
 | `design/design-system.md` | `01_Assets`의 컴포넌트별 명세: 구조, 프로퍼티, 제작 순서, 검수 체크리스트 |
 | `design/formats.md` | 포맷별 규칙: 캔버스 크기, 안전영역, 중앙 정사각형 법칙, 카테고리별 강조색, 카피 길이 제한, 톤 |
@@ -498,19 +498,20 @@ node scripts/export-frames.mjs --ids 47:43,47:66 --out exports/tmp
 #### 타이포그래피
 
 노션은 **마케팅 헤드라인에 세리프**(Lyon), **제품 UI에 산세리프**(Inter)를 쓴다.
-이 프로젝트는 그 전략을 한글로 옮겼다.
+카드뉴스는 제품 톤에 가깝다고 보고 **산세리프 한 벌로 통일했다.** 위계는 서체가 아니라
+웨이트와 크기로 만든다.
 
 | 노션 | 원본 | 여기 |
 |---|---|---|
-| 에디토리얼 헤드라인 | Lyon (유료 라이선스) | **Noto Serif KR** |
-| 제품·본문 | Inter | **Noto Sans KR** |
+| 제품·본문 | Inter | **Noto Sans KR** (전 스타일) |
+| 에디토리얼 헤드라인 | Lyon (유료 라이선스) | 쓰지 않음 |
 
 텍스트 스타일 7종:
 
 | 스타일 | 계열 | Figma 스타일 | 크기 | 행간 | 자간 | 용도 |
 |---|---|---|---|---|---|---|
-| `Display` | 세리프 | SemiBold | 88 | 1.2 | −2% | 표지 대제목, 최대 3줄 |
-| `Quote` | 세리프 | Regular | 52 | 1.5 | −1% | 인용문 |
+| `Display` | 산세리프 | Black | 88 | 1.2 | −2% | 표지 대제목, 최대 3줄 |
+| `Quote` | 산세리프 | Light | 52 | 1.5 | −1% | 인용문 |
 | `Title` | 산세리프 | Bold | 60 | 1.3 | −2% | 본문 카드 제목, 최대 2줄 |
 | `Subtitle` | 산세리프 | Medium | 40 | 1.4 | −2% | 표지 부제, 스토리 본문 |
 | `Body` | 산세리프 | Regular | 34 | 1.5 | −1% | 본문 |
@@ -559,7 +560,7 @@ node scripts/export-frames.mjs --ids 47:43,47:66 --out exports/tmp
 | `PT/Single` | 1080×1350 | `title`, `body`, `showImage`, `theme` |
 | `ST/Base` | 1080×1920 | `title`, `body`, `showImage`, `theme` |
 
-- `CN/Cover` — 캐러셀 표지. 뱃지 위에 세리프 `Display` 헤드라인. 제목은 20자 이내.
+- `CN/Cover` — 캐러셀 표지. 뱃지 위에 `Display`(Black 88) 헤드라인. 제목은 20자 이내.
 - `CN/Body` — 주력 카드. 진행 표시는 상단 고정, 콘텐츠는 중앙, 로고는 하단.
   `showCallout`을 켜면 본문 아래 노션식 콜아웃이 붙는다.
 - `CN/Quote` — 좌측 세로선이 있는 인용 카드. 세로 중앙 정렬. 로고 없음.
@@ -633,7 +634,7 @@ node scripts/export-frames.mjs --ids 47:43,47:66 --out exports/tmp
 - 종이 같은 따뜻한 무채색. 본문에 순수한 검정이나 회색을 쓰지 않는다.
 - **그림자·그라디언트·굵은 테두리 없음.** 위계는 서체와 여백으로 만든다.
 - 색은 의미를 표시할 때만 쓴다. 장식 금지. 한 게시물에 강조색 하나.
-- 세리프는 `Display`와 `Quote` 전용. 세리프 본문은 가독성도 톤도 어긋난다.
+- 서체는 Noto Sans KR 한 벌. 위계는 웨이트(Black·Bold·Regular·Light)와 크기로만 만든다.
 - 톤: 단정적이고 짧게. 기능이 아니라 결과를 말한다. 낚시성 표현 금지.
 - **Notion 로고를 그리거나 재현하지 않는다.** 카드에는 계정 자체 마크를 넣는다.
   Campus Leader 프로그램에 앰배서더 브랜드 규정이 있다면 그쪽이 우선한다.

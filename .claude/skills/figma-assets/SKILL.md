@@ -19,7 +19,8 @@ Figma에서 **Pretendard** 사용 가능 여부를 확인한다.
 - 있으면 `figma-file.json`의 `fonts.sansInstalled`를 `true`로 기록하고 진행한다.
 - 없으면 `false`로 기록하고 **Noto Sans KR**로 만든 뒤, 작업 종료 시
   "Pretendard 설치하면 다시 만들 수 있다"고 보고한다. 다른 폰트를 임의로 고르지 않는다.
-- 명조는 **Noto Serif KR** 을 쓴다. Display·Quote 전용이다.
+- **세리프(명조)는 쓰지 않는다.** 7개 스타일 전부 산세리프 한 벌이고, 위계는 웨이트와
+  크기로 만든다 (`Display` Black 88 ↔ `Title` Bold 60).
 
 ### 1. 연결 확인
 Figma MCP로 대상 파일을 연다. `design/figma-file.json`의 `fileKey`가 비어 있으면
@@ -53,7 +54,7 @@ Figma MCP로 대상 파일을 연다. `design/figma-file.json`의 `fileKey`가 �
 
 - **토큰에 없는 색을 쓰기.** Notion 공식 팔레트 밖의 색은 만들지 않는다.
   필요하면 먼저 `tokens.json` 추가를 제안한다.
-- **Noto Serif KR / Noto Sans KR / Pretendard 외의 폰트 사용**
+- **Noto Sans KR / Pretendard 외의 폰트 사용** — 세리프(명조)를 다시 들이는 것 포함
 - `Body` 행간 1.5를 좁혀서 레이아웃 문제를 해결하기 → 대신 글자 수를 줄인다
 - 그림자·그라디언트·굵은 테두리 추가 (노션 톤 위반)
 - 기존 마스터 컴포넌트를 사용자 승인 없이 수정·삭제하기
@@ -66,11 +67,10 @@ Figma MCP로 대상 파일을 연다. `design/figma-file.json`의 `fileKey`가 �
 ```
 폰트
   Pretendard  미설치 → Noto Sans KR 로 생성함
-  Noto Serif KR   사용 가능 (명조)
 
 만든 것
   변수      Core · 중립 8 / accent 9 / accentBg 9 / accentBgDark 9 / 간격 8 / 반경 5
-  텍스트    Display(명조) Quote(명조) Title Subtitle Body Caption Label
+  텍스트    Display Quote Title Subtitle Body Caption Label (전부 Noto Sans KR)
   컴포넌트  CN/Cover (12:345), CN/Body (12:401) ...
 
 검수
