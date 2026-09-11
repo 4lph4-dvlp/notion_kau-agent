@@ -92,6 +92,32 @@ host. If the host exits, a client promotes itself.
 Reads that do not need the plugin — listing the file structure, exporting PNGs — go
 through the Figma **REST API** instead, which has its own separate (and generous) limits.
 
+### Where the content comes from
+
+The bridge handles **pixels**. The **sentences** are decided upstream of it.
+
+```
+Notion «콘텐츠 기획» DB       planning · research · image plan   /content-plan
+        │                     (humans and agents edit it together)
+        ▼
+content/posts/<slug>.md       approved copy snapshot (in git)    /instagram-post step 1
+        │
+        ▼
+Figma 02_Workspace            assembled cards                    /instagram-post step 2
+        │
+        ▼
+exports/<slug>/*.png          PNGs ready to upload               /instagram-post step 4
+        │
+        ▼
+Notion «6. 디자인 결과»        node IDs · file list written back   /instagram-post step 5
+```
+
+Planning lives in Notion because that is **where a human can step in.** Adding research,
+reordering cards, and tightening sentences is far easier on a Notion page than in a markdown
+file. The repo keeps only the **approved copy** as a snapshot, which is what enters git history.
+
+Spec: [`design/content-plan.md`](design/content-plan.md).
+
 ---
 
 ## 3. Prerequisites
@@ -102,7 +128,7 @@ through the Figma **REST API** instead, which has its own separate (and generous
 | **Figma desktop app** | the plugin only runs there | the browser version cannot run local dev plugins |
 | **A Figma workspace** | assets and posts both live there | get invited to the shared file (A) or make your own (B) — [4.2](#42-choose-your-figma-workspace) |
 | At least one MCP client | Claude Code, Codex, or Antigravity | all three can be registered simultaneously |
-| Figma personal access token | PNG export via REST | free to create, see [4.5](#45-rest-api-token-env) |
+| **Notion account + internal integration** | Content planning documents | free. **Can differ from your Claude/OpenAI account** — see [4.3](#43-register-the-mcp-server) |
 
 Korean text is set in **Noto Sans KR** alone — bundled with Figma, nothing to install.
 (See [7.2](#72-design-tokens) for the optional Pretendard upgrade.)
@@ -249,6 +275,103 @@ installed variant reads):
 > **Use forward slashes**, even on Windows. Node accepts them, and they avoid
 > backslash-escaping bugs in JSON.
 
+#### Notion (for planning)
+
+Content planning is written to Notion. This project uses the **official local server**,
+[`@notionhq/notion-mcp-server`](https://github.com/makenotion/notion-mcp-server). It
+authenticates with an **internal integration token** instead of OAuth, which means:
+
+- **Your Notion account can differ from your Claude/OpenAI account.** Only Notion credentials are used
+- All three agents register it **the same way** (all stdio)
+- No browser login
+
+**1. Create an internal integration**
+
+[notion.so/profile/integrations](https://www.notion.so/profile/integrations) → **New integration**
+→ type **Internal**, pick the workspace where posts will live. **Read / Update / Insert content**
+capabilities are enough; user information access is not needed.
+
+Copy the secret (`ntn_...`) into `.env`:
+
+```bash
+NOTION_TOKEN=ntn_xxxxxxxxxxxxxxxxxxxxx
+```
+
+**2. Grant the integration access to a page — skip this and nothing is visible**
+
+An internal integration only sees pages **explicitly shared with it**. Open the page you want the
+plans to live under and pick **⋯ → Connections → your new integration**. Child pages inherit it.
+
+Verify:
+
+```bash
+node scripts/notion-mcp.mjs --check
+```
+
+It should print the integration name and ID.
+
+**3. Register it with each agent**
+
+The token stays in `.env` only; all three clients run `scripts/notion-mcp.mjs`, which reads `.env`
+and passes the token to the real server. No copying the secret into three config files.
+
+```bash
+# Claude Code
+claude mcp add --scope user notion -- node "<PROJECT>/scripts/notion-mcp.mjs"
+
+# Codex
+codex mcp add notion -- node "<PROJECT>/scripts/notion-mcp.mjs"
+```
+
+For Antigravity, add it next to `figma-bridge` in the same two `mcp_config.json` files:
+
+```json
+{
+  "mcpServers": {
+    "figma-bridge": {
+      "command": "node",
+      "args": ["<PROJECT>/bridge/server.mjs"]
+    },
+    "notion": {
+      "command": "node",
+      "args": ["<PROJECT>/scripts/notion-mcp.mjs"]
+    }
+  }
+}
+```
+
+The first run takes a few seconds while `npx` downloads the server package. The launcher **pins
+`@2.5.1`** — `npx` will happily serve a stale cached build, and versions below 2.4 lack the tools
+that read and write a page as Markdown. To move off the pin, set
+`NOTION_MCP_PACKAGE=@notionhq/notion-mcp-server@<version>` in `.env`.
+
+**4. Create the database**
+
+On the first `/content-plan` run the agent asks which page to create the «콘텐츠 기획» database
+under — the page you shared in step 2. The database ID is recorded in `content/notion.json`, the
+Notion counterpart of `design/figma-file.json`.
+
+> **Why not the hosted server (`mcp.notion.com`)?**
+>
+> Notion recommends the hosted server and its tools are better (`notion-search`, `notion-fetch`, …).
+> But it is **OAuth-only and does not support token authentication.** That means a browser login in
+> each of the three agents and no headless operation. For this project, one `.env` token that works
+> identically everywhere is the better trade.
+>
+> The cost is that the local package is one Notion **explicitly describes as no longer actively
+> maintained.** It works today and has every tool we need, but if it ever breaks, switch:
+>
+> ```bash
+> claude mcp add --scope user --transport http notion https://mcp.notion.com/mcp
+> codex   mcp add notion --url https://mcp.notion.com/mcp
+> ```
+>
+> Antigravity: `{"notion": {"serverUrl": "https://mcp.notion.com/mcp"}}`.
+> Each one needs its own browser OAuth pass. You log in with your **Notion** account there, so a
+> different Claude account is still not a problem.
+> (Do not use the "Notion" connector in Antigravity's MCP gallery — it ships the old package.
+> Register it as a custom server, per Notion's own docs.)
+
 ### 4.4 Install the Figma plugin
 
 This is the step you must do by hand, once.
@@ -265,27 +388,22 @@ A red dot means the bridge server is not running — see [section 5](#5-running-
 > **Keep the plugin panel open while you work.** Closing it kills the connection.
 > Figma unloads plugins when you switch files, so re-run it after switching.
 
-### 4.5 REST API token (`.env`)
+### 4.5 Environment configuration (`.env`)
 
-Needed only for PNG export and file-structure reads. Both are independent of the bridge.
-
-1. Figma → account menu → `Settings` → `Security` → **Personal access tokens** → generate
-   one with **File content: Read**. **Each person creates their own token.**
-2. Copy `.env.example` to `.env` and fill in the token:
+Copy `.env.example` to `.env` and fill in:
 
 ```bash
-FIGMA_TOKEN=figd_xxxxxxxxxxxxxxxxxxxxx
 FIGMA_FILE_KEY=l4iUTnc5fRX9vPDLSY8eDI   # path A: leave as is / path B: your own file key
+NOTION_TOKEN=ntn_xxxxxxxxxxxxxxxxxxxxx  # Notion secret from 4.3
 ```
 
-> The token is **personal** — never share it. `FIGMA_FILE_KEY` must always match `fileKey`
-> in `design/figma-file.json`: unchanged on path A, both replaced with your own on path B.
+> **A Figma personal access token is not needed.** PNG export and frame inspection
+> are performed directly through the `Agent Bridge` plugin running in Figma Desktop.
+> `FIGMA_FILE_KEY` must always match `fileKey` in `design/figma-file.json`: unchanged on path A,
+> both replaced with your own on path B.
 > `.env` is gitignored — never commit it.
->
-> A token only reads files you have access to. A 403 from `--list` means either (A) you have
-> not been invited to the file yet, or (B) `FIGMA_FILE_KEY` is not your file's key.
 
-Verify:
+Verify (with the plugin running):
 
 ```bash
 node scripts/export-frames.mjs --list
@@ -411,13 +529,14 @@ node scripts/export-frames.mjs --ids 47:43,47:66 --out exports/tmp
 | Skill | Purpose |
 |---|---|
 | `figma-assets` | build or modify the design system on `01_Assets` |
-| `instagram-post <slug>` | turn a brief into finished cards on `02_Workspace` |
+| `content-plan <topic>` | research a topic and write a plan into Notion. Never opens Figma |
+| `instagram-post <slug>` | turn a Notion plan into finished cards on `02_Workspace` |
 
 How you invoke them differs per agent.
 
 | Agent | Skill location | How to call |
 |---|---|---|
-| Claude Code | `.claude/skills/` | `/figma-assets`, `/instagram-post <slug>` |
+| Claude Code | `.claude/skills/` | `/figma-assets`, `/content-plan <topic>`, `/instagram-post <slug>` |
 | Codex | `.codex/skills/` | ask by name — "use the figma-assets skill to …" |
 | Antigravity | `.agents/skills/` | ask by name (discovered as a workspace skill) |
 
@@ -440,17 +559,22 @@ Read these in order when you are new. `AGENTS.md` is the one agents must follow.
 |---|---|
 | **`AGENTS.md`** | **The rules all agents obey.** Hard constraints, workflow, naming. Start here. |
 | `CLAUDE.md` | Claude Code entry point; points at `AGENTS.md` plus a quick reference table |
+| `GEMINI.md` | Antigravity (Gemini/AGY) entry point; points at `AGENTS.md` plus quick reference table and tool guidelines |
 | `design/brand.md` | **Why** the colors and typefaces are what they are. Notion's palette, the single-sans decision, and an explicit table of what is Notion-derived vs. not |
 | `design/tokens.json` | **The source of truth for values.** Colors, type scale, spacing, radii, canvas sizes, safe areas. Figma variables are generated from this |
 | `design/design-system.md` | Component-by-component spec for `01_Assets`: structure, properties, build order, review checklist |
 | `design/formats.md` | Per-format rules: canvas sizes, safe areas, the center-square law, category accent colors, copy length limits, voice |
+| `design/content-plan.md` | **Plan document spec.** Notion database schema, page body skeleton, and the parsing contract for which fields become Figma properties |
 | `design/figma-file.json` | **Registry.** File key, page IDs, every component's node ID / key / properties. Agents read this before working and update it after |
 | `design/rebuild-plan.md` | Record of the center-square + light/dark migration, with the color mapping table. Useful when rebuilding |
 | `bridge/README.md` | Bridge internals, Plugin API gotchas, API differences vs. the official MCP |
-| `content/briefs/` | **Input.** One markdown file per post idea |
-| `content/posts/` | **Output.** Approved copy + the Figma node IDs of the generated frames |
+| `content/notion.json` | **Registry.** Notion workspace and database IDs. The Notion counterpart of `figma-file.json` |
+| `content/briefs/` | Optional. Hand-written notes before planning. Not authoritative — the Notion page is |
+| `content/posts/` | **Approved copy snapshot** pulled down from Notion + the Figma node IDs of the generated frames |
+| `content/images/<slug>/` | The actual image files that go into card image slots |
 | `exports/` | Generated PNGs (gitignored) |
-| `scripts/export-frames.mjs` | REST-based PNG export |
+| `scripts/export-frames.mjs` | Agent Bridge-based PNG export (no token needed) |
+| `scripts/notion-mcp.mjs` | Notion MCP launcher. Reads `NOTION_TOKEN` from `.env` and starts the official server. `--check` diagnoses the connection |
 | `bridge/` | The MCP server, the Figma plugin, and the CLI runner |
 
 ### 7.2 Design tokens
@@ -653,35 +777,39 @@ From `design/brand.md`:
 > On path B your `01_Assets` is empty. Build it with the `figma-assets` skill before you
 > get here ([4.2](#42-choose-your-figma-workspace)).
 
-### Step 1 — Write a brief
+### Step 1 — Plan it (in Notion)
 
-`content/briefs/<slug>.md`. Copy `_example.md` as a starting point.
-
-```markdown
----
-slug: notion-db-tips
-format: cardnews        # cardnews | post | story
-cards: 7
-accent: red             # blue | purple | orange | red | green | gray
-date: 2026-09-07
-status: draft
----
-
-# Topic
-The 5 mistakes beginners make with Notion databases
-
-## Audience
-University students who just started with Notion.
-
-## Key message
-A database is not a table — it is one dataset viewed many ways.
-
-## Points to cover
-1. ...
-
-## Call to action
-Save it, and follow.
 ```
+/content-plan the mistakes beginners make with Notion databases
+```
+
+The agent works through this:
+
+1. Scans existing rows in the «콘텐츠 기획» database for **topic overlap**. If something
+   collides, it asks before spending time on research
+2. Researches — facts with source links, Notion features verified against the **official help
+   docs**, and layout references observed from Notion's own social accounts
+   (`@notionhq`, `@notionhq_kr`) for **structure and length**, never copied wording
+3. Creates a row and fills the page body with the fixed skeleton
+
+```
+1. 개요        topic · audience · key message · why now · voice · CTA
+2. 조사        verified facts (with links) · references · what we cut and why
+3. 카드 구성   per-card copy and image on/off      ← the part the design step reads
+4. 캡션        Instagram caption + hashtags
+5. 이미지 계획  a table of which image comes from where
+6. 디자인 결과  (left empty — the design step fills it)
+```
+
+4. Counts the copy against the limits in `design/formats.md`, then sets the status to `기획완료`
+
+Then it stops. **This is your turn to read and edit in Notion** — add research, reorder cards,
+tighten sentences. It is the easiest point in the pipeline for a human to collaborate.
+
+> If you already have notes, drop them in `content/briefs/<slug>.md` and the agent uses them
+> as a starting point. Briefs are optional; **the Notion page is authoritative.**
+
+The exact schema and field rules are in [`design/content-plan.md`](design/content-plan.md).
 
 ### Step 2 — Lock the copy *before* touching Figma
 
@@ -689,9 +817,14 @@ Save it, and follow.
 /instagram-post notion-db-tips
 ```
 
-The agent writes `content/posts/<slug>.md` with per-card copy and **stops for your
-approval**. This is deliberate: a round trip to the canvas is expensive, and rewriting
-text after the frames exist wastes far more time than reading it first.
+The agent finds the Notion plan by `slug`, pulls the approved copy down into
+`content/posts/<slug>.md`, and **stops for your approval**. This is deliberate: a round trip to
+the canvas is expensive, and rewriting text after the frames exist wastes far more time than
+reading it first.
+
+- If the status is below `기획완료` it refuses and sends you back to planning
+- If it finds a spec violation it **does not quietly fix it in the repo**. It reports, you fix the
+  Notion page, it pulls again. Notion and the repo drifting apart is the worst state to be in
 
 Check against the limits in [7.4](#74-layout-laws): title length, sentence count, one CTA.
 
@@ -734,6 +867,14 @@ node scripts/export-frames.mjs --slug notion-db-tips
 
 PNGs land in `exports/<slug>/`, numbered in order. Upload, paste the caption from the
 post file, done. Set `status: approved`.
+
+### Step 6 — Write the result back to Notion
+
+The agent returns to the plan page, fills «6. 디자인 결과» with the Figma section name, node
+IDs, and exported files, and moves the database status to `발행준비`. Someone reading only
+Notion should still know where the post stands.
+
+Moving it to `발행됨` is yours to do — the agent cannot know whether you actually posted.
 
 ---
 

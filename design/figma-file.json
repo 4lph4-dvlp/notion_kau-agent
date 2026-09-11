@@ -190,12 +190,15 @@
         "body",
         "showImage",
         "showCallout",
+        "showCaption",
+        "caption",
         "theme"
       ],
       "variants": [
         "theme=light",
         "theme=dark"
-      ]
+      ],
+      "_note": "showCaption/caption 은 2026-09-10 에 추가. imageSlot 바로 아래 Caption(26) + Text/Secondary. 기본 꺼짐"
     },
     "CN/Quote": {
       "id": "47:73",
@@ -210,7 +213,8 @@
       "variants": [
         "theme=light",
         "theme=dark"
-      ]
+      ],
+      "_note": "2026-09-10 에 로고 푸터를 추가했다 — 그전까지 이 카드만 로고가 없었다"
     },
     "CN/CTA": {
       "id": "47:82",
@@ -243,7 +247,7 @@
       ]
     }
   },
-  "lastUpdated": "2026-09-07",
+  "lastUpdated": "2026-09-11",
   "logoMarks": {
     "_note": "기존 로고 마크. UI/Logo 심볼로 쓸 수 있다.",
     "Group 1": {
@@ -278,8 +282,9 @@
     "setPadding": 60,
     "variantGrid": "색 축이 있으면 색=열/테마=행, 없으면 테마를 가로로. light 가 항상 먼저.",
     "note": "컴포넌트 세트는 변형을 옮겨도 프레임이 자동으로 커지지 않는다. resizeWithoutConstraints 로 직접 맞춰야 한다.",
-    "contentAlign": "4:5 카드는 콘텐츠 덩어리를 중앙 정사각형(y 135~1215) 안에서 세로 중앙에 둔다. 푸터(로고)는 정사각형 하단, CN/Body 의 진행표시는 정사각형 상단에 고정.",
-    "imageSlot": "모든 카드에 showImage(BOOLEAN) 로 16:9(920x518) 슬롯이 있다. 기본 꺼짐. 배경은 light=BG/Subtle, dark=AccentBgDark/Gray, 반경 radius/md."
+    "contentAlign": "이미지 켠 상태의 텍스트 중심은 Cover 925 · CTA/Single 929 · Story 1299 로 «확정안»과 일치한다. 끈 상태는 Cover 655 · Body 698 로 정사각형 중심(675) 근처에 온다 (2026-09-11 수정 전에는 588 이었다)",
+    "imageSlot": "2026-09-10 개정: 인셋 920x518 → 상단 전면 띠. 카드 1080x675(비율 1.600), 스토리 1080x960. 루트 세로 오토레이아웃의 첫 자식이고 showImage 에 묶여 있다. 꺼지면 자리를 먹지 않고 텍스트가 위로 올라온다. 배경 light=BG/Subtle, dark=AccentBgDark/Gray, 반경 0",
+    "cardStructure": "루트(VERTICAL, pad 상하 135 / 스토리 250) > imageSpacer > [header(CN/Body: caption 좌 · dots 우)] > main(FILL + CENTER, pad 좌우 80) > footer(pad 좌우 80). imageSlot 은 layoutPositioning='ABSOLUTE' 로 흐름 밖에 두어 여백을 무시하고 전면(0,0)을 덮는다. 흐름에서는 imageSpacer(높이 = 이미지높이 - 여백)가 같은 showImage 에 묶여 자리를 대신 잡는다. 이 두 장치 덕분에 이미지를 꺼도 정사각형 여백 135가 유지된다"
   },
   "brand": {
     "handle": "@notion_kau",

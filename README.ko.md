@@ -90,6 +90,32 @@ client 하나가 스스로 승격한다.
 플러그인이 필요 없는 읽기 작업(파일 구조 조회, PNG 내보내기)은 Figma **REST API**를
 쓴다. 별도의 넉넉한 한도가 적용된다.
 
+### 콘텐츠는 어디서 오나
+
+브리지는 **픽셀**을 담당한다. **문장**은 그 앞에서 결정된다.
+
+```
+Notion «콘텐츠 기획» DB      기획 · 조사 · 이미지 계획       /content-plan
+        │                    (사람과 에이전트가 함께 고친다)
+        ▼
+content/posts/<slug>.md      확정 카피 스냅샷 (git 이력)     /instagram-post 1단계
+        │
+        ▼
+Figma 02_Workspace           조립된 카드                    /instagram-post 2단계
+        │
+        ▼
+exports/<slug>/*.png         업로드용 PNG                   /instagram-post 4단계
+        │
+        ▼
+Notion «6. 디자인 결과»       노드 ID · 파일 목록 되돌려 기록   /instagram-post 5단계
+```
+
+기획을 Notion에 두는 이유는 **사람이 끼어들 자리를 만들기 위해서다.** 조사 내용을 보태고,
+카드 순서를 바꾸고, 문장을 다듬는 일은 마크다운 파일보다 Notion 페이지에서 훨씬 쉽다.
+저장소에는 디자인 직전 시점의 **확정 카피만** 스냅샷으로 남아 git 이력이 된다.
+
+규격은 [`design/content-plan.md`](design/content-plan.md).
+
 ---
 
 ## 3. 사전 준비
@@ -100,7 +126,7 @@ client 하나가 스스로 승격한다.
 | **Figma 데스크톱 앱** | 플러그인은 여기서만 실행된다 | 브라우저 버전은 로컬 개발 플러그인을 못 돌린다 |
 | **Figma 작업공간** | 에셋과 게시물이 모두 여기 있다 | 공유 파일에 초대받거나(A), 직접 만든다(B) — [4.2](#42-figma-작업공간-정하기) |
 | MCP 클라이언트 최소 1개 | Claude Code, Codex, Antigravity | 셋 다 동시에 등록 가능 |
-| Figma 개인 액세스 토큰 | REST로 PNG 내보내기 | 무료, [4.5](#45-rest-api-토큰-env) 참고 |
+| **Notion 계정 + 내부 통합** | 콘텐츠 기획 문서 | 무료. **Claude/OpenAI 계정과 달라도 된다** — [4.3](#43-mcp-서버-등록) 참고 |
 
 한글은 **Noto Sans KR** 한 벌로 조판한다. Figma 기본 제공이라 설치할 게 없다.
 (Pretendard 업그레이드는 [7.2](#72-디자인-토큰) 참고)
@@ -247,6 +273,103 @@ CLI가 없어서 설정 파일을 직접 고친다. 설치된 버전에 따라 �
 > Windows에서도 **슬래시(`/`)를 쓸 것.** Node가 받아주고, JSON에서 백슬래시 이스케이프가
 > 깨지는 사고를 막을 수 있다.
 
+#### Notion (기획용)
+
+콘텐츠 기획은 Notion에 쓴다. 여기서 쓰는 건 **공식 로컬 서버**
+[`@notionhq/notion-mcp-server`](https://github.com/makenotion/notion-mcp-server)다.
+OAuth 없이 **내부 통합 토큰** 하나로 붙기 때문에,
+
+- **노션 계정이 Claude/OpenAI 계정과 달라도 상관없다.** 노션 쪽 자격증명만 쓴다
+- 세 에이전트에 **똑같은 방식**으로 등록된다 (전부 stdio)
+- 브라우저 로그인이 필요 없다
+
+**1. 내부 통합 만들기**
+
+[notion.so/profile/integrations](https://www.notion.so/profile/integrations) → **New integration**
+→ 유형 **Internal**, 워크스페이스는 게시물을 관리할 곳으로 고른다.
+Capabilities는 **Read / Update / Insert content** 셋이면 충분하다. 사용자 정보 접근은 필요 없다.
+
+시크릿(`ntn_...`)을 복사해 `.env`에 넣는다.
+
+```bash
+NOTION_TOKEN=ntn_xxxxxxxxxxxxxxxxxxxxx
+```
+
+**2. 통합에 페이지 권한 주기 — 이걸 빼먹으면 아무것도 안 보인다**
+
+내부 통합은 **명시적으로 공유한 페이지만** 본다. 기획 문서를 둘 상위 페이지를 열고
+**⋯ → 연결(Connections) → 방금 만든 통합**을 추가한다. 하위 페이지는 자동으로 상속된다.
+
+확인:
+
+```bash
+node scripts/notion-mcp.mjs --check
+```
+
+통합 이름과 ID가 나오면 성공이다.
+
+**3. 각 에이전트에 등록**
+
+토큰은 `.env`에만 두고, 세 클라이언트 모두 `scripts/notion-mcp.mjs`를 실행하게 한다.
+런처가 `.env`를 읽어 실제 서버에 넘긴다 — 토큰을 설정 파일 세 군데에 복사할 일이 없다.
+
+```bash
+# Claude Code
+claude mcp add --scope user notion -- node "<PROJECT>/scripts/notion-mcp.mjs"
+
+# Codex
+codex mcp add notion -- node "<PROJECT>/scripts/notion-mcp.mjs"
+```
+
+Antigravity는 `figma-bridge`와 같은 `mcp_config.json` 두 곳에 나란히 적는다.
+
+```json
+{
+  "mcpServers": {
+    "figma-bridge": {
+      "command": "node",
+      "args": ["<PROJECT>/bridge/server.mjs"]
+    },
+    "notion": {
+      "command": "node",
+      "args": ["<PROJECT>/scripts/notion-mcp.mjs"]
+    }
+  }
+}
+```
+
+첫 실행 때 `npx`가 서버 패키지를 내려받느라 몇 초 걸린다. 런처는 버전을
+**`@2.5.1`로 고정**해서 띄운다 — `npx`가 캐시에 있는 옛 버전을 그냥 쓰는 일이 있는데,
+2.4 미만에는 기획 문서를 마크다운으로 읽고 쓰는 도구가 없다.
+올리려면 `.env`에 `NOTION_MCP_PACKAGE=@notionhq/notion-mcp-server@<버전>`을 적는다.
+
+**4. DB 만들기**
+
+첫 `/content-plan` 실행 때 에이전트가 «콘텐츠 기획» 데이터베이스를 만들 상위 페이지를 묻는다
+(2번에서 공유한 그 페이지다). 만들어진 DB의 ID는 `content/notion.json`에 기록된다 —
+Figma 쪽 `design/figma-file.json`과 같은 역할이다.
+
+> **왜 호스팅 서버(`mcp.notion.com`)를 안 쓰나**
+>
+> 노션이 권장하는 건 호스팅 서버 쪽이고 도구도 더 좋다(`notion-search`, `notion-fetch` 등).
+> 하지만 **OAuth만 지원하고 토큰 인증이 안 된다.** 에이전트 셋에서 각각 브라우저 로그인을
+> 해야 하고, 헤드리스로 돌릴 수 없다. 이 프로젝트는 `.env` 토큰 하나로 세 에이전트가
+> 똑같이 도는 쪽이 맞다.
+>
+> 반대로 로컬 서버는 **노션이 "더 이상 활발히 유지보수하지 않는다"고 명시**한 패키지다.
+> 지금은 잘 돌고 기능도 다 있지만, 언젠가 막히면 호스팅 서버로 갈아타면 된다:
+>
+> ```bash
+> claude mcp add --scope user --transport http notion https://mcp.notion.com/mcp
+> codex   mcp add notion --url https://mcp.notion.com/mcp
+> ```
+>
+> Antigravity는 `{"notion": {"serverUrl": "https://mcp.notion.com/mcp"}}`.
+> 셋 다 브라우저 OAuth를 따로 통과해야 한다. 이때 로그인하는 건 **노션 계정**이라
+> Claude 계정과 다른 건 여전히 문제가 안 된다.
+> (Antigravity MCP 갤러리의 "Notion" 커넥터는 옛 패키지를 쓰므로 쓰지 말고
+> 커스텀 서버로 등록할 것 — 노션 공식 문서 권고다.)
+
 ### 4.4 Figma 플러그인 설치
 
 직접 해야 하는 단계. 한 번만 하면 된다.
@@ -263,27 +386,22 @@ CLI가 없어서 설정 파일을 직접 고친다. 설치된 버전에 따라 �
 > **작업하는 동안 플러그인 패널을 열어둘 것.** 닫으면 연결이 끊긴다.
 > 파일을 전환하면 Figma가 플러그인을 내리므로 다시 실행해야 한다.
 
-### 4.5 REST API 토큰 (`.env`)
+### 4.5 환경 설정 (`.env`)
 
-PNG 내보내기와 파일 구조 조회에만 필요하다. 둘 다 브리지와 무관하게 동작한다.
-
-1. Figma → 계정 메뉴 → `Settings` → `Security` → **Personal access tokens** →
-   **File content: Read** 권한으로 발급. **토큰은 각자 자기 계정에서 만든다.**
-2. `.env.example`을 `.env`로 복사하고 토큰만 채운다.
+`.env.example`을 `.env`로 복사하고 설정한다.
 
 ```bash
-FIGMA_TOKEN=figd_xxxxxxxxxxxxxxxxxxxxx
 FIGMA_FILE_KEY=l4iUTnc5fRX9vPDLSY8eDI   # A: 그대로 둔다 / B: 내 파일 키로 바꾼다
+NOTION_TOKEN=ntn_xxxxxxxxxxxxxxxxxxxxx  # 4.3에서 발급받은 노션 시크릿
 ```
 
-> 토큰은 **개인 것**이라 공유하지 않는다. `FIGMA_FILE_KEY`는 `design/figma-file.json`의
-> `fileKey`와 **항상 같은 값**이어야 한다 — 경로 A면 그대로, 경로 B면 둘 다 내 키로 바꾼다.
+> **Figma 개인 액세스 토큰은 필요 없다.** PNG 내보내기와 프레임 검수는 데스크톱에서
+> 실행 중인 `Agent Bridge` 플러그인을 통해 직접 수행된다.
+> `FIGMA_FILE_KEY`는 `design/figma-file.json`의 `fileKey`와 **항상 같은 값**이어야 한다 —
+> 경로 A면 그대로, 경로 B면 둘 다 내 키로 바꾼다.
 > `.env`는 gitignore 대상이니 절대 커밋하지 말 것.
->
-> 토큰은 **내가 접근 권한을 가진 파일만** 읽는다. `--list`가 403이면 (A) 아직 파일에
-> 초대되지 않았거나 (B) `FIGMA_FILE_KEY`가 내 파일 키가 아니다.
 
-확인:
+확인 (플러그인이 켜진 상태에서):
 
 ```bash
 node scripts/export-frames.mjs --list
@@ -408,13 +526,14 @@ node scripts/export-frames.mjs --ids 47:43,47:66 --out exports/tmp
 | 스킬 | 용도 |
 |---|---|
 | `figma-assets` | `01_Assets`의 디자인 시스템 구축·수정 |
-| `instagram-post <slug>` | 브리프를 받아 `02_Workspace`에 카드 제작 |
+| `content-plan <주제>` | 조사해서 Notion «콘텐츠 기획»에 기획 문서 작성. Figma를 열지 않는다 |
+| `instagram-post <slug>` | Notion 기획 문서를 읽어 `02_Workspace`에 카드 제작 |
 
 호출 방법은 에이전트마다 다르다.
 
 | 에이전트 | 스킬 위치 | 부르는 법 |
 |---|---|---|
-| Claude Code | `.claude/skills/` | `/figma-assets`, `/instagram-post <slug>` |
+| Claude Code | `.claude/skills/` | `/figma-assets`, `/content-plan <주제>`, `/instagram-post <slug>` |
 | Codex | `.codex/skills/` | "figma-assets 스킬로 …" 처럼 이름으로 지시 |
 | Antigravity | `.agents/skills/` | 이름으로 지시 (워크스페이스 스킬로 자동 발견) |
 
@@ -437,17 +556,22 @@ node scripts/export-frames.mjs --ids 47:43,47:66 --out exports/tmp
 |---|---|
 | **`AGENTS.md`** | **모든 에이전트가 지키는 규칙.** 절대 규칙, 워크플로, 네이밍. 여기서 시작 |
 | `CLAUDE.md` | Claude Code 진입점. `AGENTS.md`를 가리키고 빠른 참조표를 담는다 |
+| `GEMINI.md` | Antigravity (Gemini/AGY) 진입점. `AGENTS.md`를 가리키고 빠른 참조표 및 도구 지침을 담는다 |
 | `design/brand.md` | 색과 서체가 **왜** 이 값인지. 노션 팔레트, 산세리프 단일 서체 방침, 그리고 노션에서 온 것과 아닌 것을 구분한 표 |
 | `design/tokens.json` | **값의 원본.** 색, 타입 스케일, 간격, 반경, 캔버스 크기, 안전영역. Figma 변수가 여기서 생성된다 |
 | `design/design-system.md` | `01_Assets`의 컴포넌트별 명세: 구조, 프로퍼티, 제작 순서, 검수 체크리스트 |
 | `design/formats.md` | 포맷별 규칙: 캔버스 크기, 안전영역, 중앙 정사각형 법칙, 카테고리별 강조색, 카피 길이 제한, 톤 |
+| `design/content-plan.md` | **기획 문서 규격.** Notion DB 스키마, 페이지 본문 스켈레톤, 그리고 어떤 필드가 Figma 프로퍼티로 들어가는지의 파싱 계약 |
 | `design/figma-file.json` | **레지스트리.** 파일 키, 페이지 ID, 모든 컴포넌트의 노드 ID·키·프로퍼티. 에이전트가 작업 전에 읽고 작업 후에 갱신한다 |
 | `design/rebuild-plan.md` | 중앙 정사각형 + 흑백 테마 전환 기록과 색 대응표. 재구축할 때 유용 |
 | `bridge/README.md` | 브리지 내부 구조, Plugin API 함정, 공식 MCP와의 API 차이 |
-| `content/briefs/` | **입력.** 게시물 소재 하나당 마크다운 하나 |
-| `content/posts/` | **출력.** 확정 카피 + 생성된 프레임의 노드 ID |
+| `content/notion.json` | **레지스트리.** Notion 워크스페이스·DB ID. `figma-file.json`의 Notion판 |
+| `content/briefs/` | 선택. 기획 전 손메모. 정본이 아니다 — 기획의 정본은 Notion 페이지다 |
+| `content/posts/` | **확정 카피 스냅샷.** Notion에서 내려받은 카피 + 생성된 프레임의 노드 ID |
+| `content/images/<slug>/` | 카드 이미지 슬롯에 넣을 실제 파일 |
 | `exports/` | 생성된 PNG (gitignore 대상) |
-| `scripts/export-frames.mjs` | REST 기반 PNG 내보내기 |
+| `scripts/export-frames.mjs` | Agent Bridge 기반 PNG 내보내기 (토큰 불필요) |
+| `scripts/notion-mcp.mjs` | Notion MCP 서버 런처. `.env`의 `NOTION_TOKEN`을 읽어 공식 서버를 띄운다. `--check`로 연결 진단 |
 | `bridge/` | MCP 서버, Figma 플러그인, CLI 러너 |
 
 ### 7.2 디자인 토큰
@@ -646,35 +770,37 @@ node scripts/export-frames.mjs --ids 47:43,47:66 --out exports/tmp
 > 경로 B로 시작했다면 `01_Assets`가 비어 있다. 여기 오기 전에 `figma-assets` 스킬로
 > 에셋을 먼저 구축한다 ([4.2](#42-figma-작업공간-정하기)).
 
-### 1단계 — 브리프 작성
+### 1단계 — 기획 (Notion)
 
-`content/briefs/<slug>.md`. `_example.md`를 복사해서 시작하면 된다.
-
-```markdown
----
-slug: notion-db-tips
-format: cardnews        # cardnews | post | story
-cards: 7
-accent: red             # blue | purple | orange | red | green | gray
-date: 2026-09-07
-status: draft
----
-
-# 주제
-노션 데이터베이스를 처음 쓰는 사람이 가장 많이 하는 실수 5가지
-
-## 타깃
-노션을 막 시작한 대학생.
-
-## 핵심 메시지
-데이터베이스는 표가 아니라, 하나의 데이터를 여러 방식으로 보는 도구다.
-
-## 담을 내용
-1. ...
-
-## 행동 유도
-저장해두고 팔로우.
 ```
+/content-plan 노션 DB 입문자가 가장 많이 하는 실수
+```
+
+에이전트가 이 순서로 움직인다.
+
+1. Notion «콘텐츠 기획» DB의 기존 행을 훑어 **주제가 겹치는지** 본다. 겹치면 먼저 물어본다
+2. 조사한다 — 사실은 출처 링크와 함께, 노션 기능은 **공식 도움말**로 확인,
+   조판 레퍼런스는 `@notionhq` · `@notionhq_kr` 같은 노션 공식 SNS에서 **구성과 분량**을 관찰
+3. DB에 행을 만들고 페이지 본문을 정해진 스켈레톤대로 채운다
+
+```
+1. 개요        주제 · 타깃 · 핵심 메시지 · 왜 지금 · 톤 · 행동 유도
+2. 조사        확인한 사실(출처 링크) · 레퍼런스 · 쓰지 않기로 한 것
+3. 카드 구성   카드별 카피와 이미지 on/off      ← 디자인 단계가 그대로 읽는 부분
+4. 캡션        인스타 캡션 + 해시태그
+5. 이미지 계획  어떤 이미지가 어디서 오는지 표
+6. 디자인 결과  (비워둔다. 디자인 단계가 채운다)
+```
+
+4. `design/formats.md`의 글자 수·톤 규격을 **직접 세어** 검증하고 상태를 `기획완료`로 올린다
+
+여기서 멈춘다. **사람이 Notion에서 읽고 고칠 차례다.** 조사 내용을 보태거나, 카드 순서를
+바꾸거나, 문장을 다듬는다. 협업이 가장 쉬운 지점이 여기다.
+
+> 손으로 먼저 정리해둔 메모가 있으면 `content/briefs/<slug>.md`에 두면 된다. 있으면
+> 출발점으로 쓰고, 없어도 상관없다. 브리프는 선택이고 **정본은 Notion 페이지다.**
+
+기획 문서의 정확한 스키마와 필드 규칙은 [`design/content-plan.md`](design/content-plan.md)에 있다.
 
 ### 2단계 — Figma를 건드리기 전에 카피부터 확정
 
@@ -682,9 +808,13 @@ status: draft
 /instagram-post notion-db-tips
 ```
 
-에이전트가 카드별 카피를 `content/posts/<slug>.md`에 쓰고 **승인을 받으려고 멈춘다.**
-의도적인 설계다. 캔버스 왕복은 비싸고, 프레임을 만든 뒤 텍스트를 고치는 건 미리 읽어보는
-것보다 훨씬 많은 시간을 쓴다.
+에이전트가 Notion 기획 문서를 `slug`로 찾아 읽고, 확정 카피를 `content/posts/<slug>.md`로
+내려받은 뒤 **승인을 받으려고 멈춘다.** 의도적인 설계다. 캔버스 왕복은 비싸고, 프레임을
+만든 뒤 텍스트를 고치는 건 미리 읽어보는 것보다 훨씬 많은 시간을 쓴다.
+
+- `상태`가 `기획완료` 미만이면 시작하지 않고 기획을 먼저 하라고 되돌린다
+- 규격 위반을 찾아도 **저장소에서 몰래 고치지 않는다.** 보고하고, 사람이 Notion을 고치면
+  다시 내려받는다. Notion과 저장소가 갈라지는 것이 가장 나쁜 상태다
 
 [7.4](#74-레이아웃-법칙)의 제한과 대조해서 확인한다 — 제목 길이, 문장 수, CTA 하나.
 
@@ -727,6 +857,13 @@ node scripts/export-frames.mjs --slug notion-db-tips
 
 PNG가 `exports/<slug>/`에 순서대로 저장된다. 업로드하고, 포스트 파일의 캡션을 붙여넣으면
 끝. `status: approved`로 바꾼다.
+
+### 6단계 — Notion에 되돌려 기록
+
+에이전트가 기획 문서로 돌아가 «6. 디자인 결과»에 Figma 섹션 이름, 노드 ID, 내보낸 파일을
+적고 DB 상태를 `발행준비`로 올린다. Notion만 보는 사람도 진행 상황을 알 수 있어야 한다.
+
+`발행됨`으로 올리는 건 사람 몫이다. 실제로 올렸는지는 에이전트가 알 수 없다.
 
 ---
 

@@ -1,6 +1,6 @@
 # 01_Assets 페이지 명세
 
-> **상태: 구축 완료 (2026-09-07).** 변수 55 · 페인트 스타일 38 · 텍스트 스타일 7 · 컴포넌트 12(전부 변형 세트).
+> **상태: 구축 완료 (2026-09-07) · 레이아웃 개정 (2026-09-10).** 변수 55 · 페인트 스타일 38 · 텍스트 스타일 7 · 컴포넌트 12(전부 변형 세트).
 > 실제 노드 ID와 키는 `design/figma-file.json`에 있다.
 > 이 문서는 **재구축·수정 시의 기준**이다. 아래 명세와 다른 것을 발견하면 명세를 고치지 말고 보고한다.
 
@@ -18,9 +18,22 @@
    푸터는 자연히 하단에 남는다. 루트를 `SPACE_BETWEEN` 으로 되돌리면
    가운데가 텅 비므로 바꾸지 말 것.
 
-3. **이미지 슬롯** — 모든 카드에 `showImage`(BOOLEAN, 기본 꺼짐)가 있다.
-   16:9 **920×518**, 반경 `radius/md`, 배경 `BG/Subtle`(light) / `AccentBgDark/Gray`(dark).
-   위치는 `design/formats.md` 표를 따른다.
+3. **이미지 슬롯 — 상단 전면 (2026-09-10 개정)** — 모든 카드에 `showImage`(BOOLEAN, 기본 꺼짐)가 있다.
+   켜면 카드 **맨 위에 가장자리까지 닿는 띠**가 생긴다. 인셋 슬롯이 아니다.
+   카드 **1080×675**(높이의 절반), 스토리 **1080×960**. 반경 **0**,
+   배경 `BG/Subtle`(light) / `AccentBgDark/Gray`(dark).
+
+   **카드 공통 구조** — 이 구조라서 이미지 유무에 따라 자동으로 재배치된다:
+   ```
+   루트 (VERTICAL, pad bottom 135 / 스토리 250)
+   ├─ imageSlot            1080×675  showImage 에 묶임. 꺼지면 자리를 안 먹는다
+   ├─ [header]             CN/Body 전용. caption 좌 · dots 우, pad top 40
+   ├─ main                 FILL 높이 + CENTER, pad 좌우 80  ← 텍스트 블록
+   └─ footer               pad 좌우 80. UI/Logo
+   ```
+   이미지 켠 상태의 텍스트 중심은 Cover 925 · CTA/Single 929 · Story 1299 로
+   `01_Assets`의 «확정안» 프로토타입과 일치한다.
+   끈 상태는 정사각형 중심(675)보다 약 87px 위에 온다.
 
 `design/brand.md`(왜 이 값인지) → `design/tokens.json`(값) 순서로 읽고,
 아래 컴포넌트를 만든다. **만드는 순서를 반드시 지킬 것** — 뒤 단계가 앞 단계를 참조한다.
@@ -132,22 +145,26 @@ AccentBg/Blue … AccentBg/Red      color/accentBg/*    (9개)
 각 카드는 `theme=light|dark` 변형 세트다. 테마별 색 대응은 `design/rebuild-plan.md`의 표를 따른다.
 
 ### `CN/Cover` — 표지
-- 배경 `BG/Inverse`(#191919), 제목 `text/onInverse`, 부제 `text/onInverseMuted`
-- 구성: `top`(FILL + CENTER) → 하단 `footer`
-  - `top`: `UI/Badge` → 제목(**`Display` = Black 88**, 최대 3줄) → 부제(`Subtitle`, 최대 2줄) → `[imageSlot]`
+- 배경: `light` → `BG/Default`(흰색), `dark` → `BG/Inverse`(#191919).
+  (2026-09-09 이전에는 표지가 항상 반전이었다. 지금은 테마를 따른다)
+- 구성: `[imageSlot]` → `main`(FILL + CENTER, gap 40) → `footer`
+  - `main`: `UI/Badge` → `titleGroup`(제목 **`Display` Black 88** + 부제 `Subtitle`)
   - `footer`: `UI/Logo` + "넘겨보기 →" (정사각형 하단 1215에 고정)
 - 프로퍼티: `title`, `subtitle`(TEXT), `showBadge`, `showImage`(BOOLEAN), `theme`
-- `showImage` 를 켜면 부제 아래에 16:9 슬롯이 나온다. 이때 제목은 2줄까지가 안전하다.
+- `showImage` 를 켜면 카드 위 절반이 이미지가 된다. 이때 제목은 2줄까지가 안전하다.
 - 반전 배경 위 뱃지는 `accentBgDark`를 배경으로, `accent` 색을 글자로 쓴다.
 
 ### `CN/Body` — 본문
 - 배경 `BG/Default`(흰색). 노션 문서를 그대로 옮긴 인상이어야 한다.
-- 구성: `header`(상단 고정) → `content`(FILL + CENTER) → `footer`(하단)
-  - `header`: `UI/ProgressDots` 우측 정렬 (정사각형 상단 135)
-  - `content`: `[imageSlot]` → 제목(`Title`, 최대 2줄) → 본문(`Body`, 최대 8줄) → `[UI/Callout]`
+- 구성: `[imageSlot]` → `header` → `main`(FILL + CENTER, gap 32) → `footer`
+  - `header`: **캡션 왼쪽 · `UI/ProgressDots` 오른쪽**, 이미지 띠 바로 아래(pad top 40)
+  - `main`: 제목(`Title`, 최대 2줄) → 본문(`Body`, 최대 8줄) → `[UI/Callout]`
   - `footer`: `UI/Logo`
-- 프로퍼티: `title`(TEXT), `body`(TEXT), `showImage`, `showCallout`(BOOLEAN), `theme`
+- 프로퍼티: `title`(TEXT), `body`(TEXT), `showImage`, `showCallout`, `showCaption`(BOOLEAN),
+  `caption`(TEXT), `theme`
   진행표시 숫자는 `UI/ProgressDots` 인스턴스가 노출돼 있어 거기서 직접 고친다.
+- `caption`은 이미지 출처를 다는 칸이다(`Caption` 26px, `Text/Secondary`).
+  **`CN/Body`에만 있다.** 2026-09-10 추가.
 - `showImage`가 true면 본문 위에 16:9 이미지 슬롯(반경 `radius/md`).
 - `showCallout`이 true면 본문 아래에 `UI/Callout` 하나.
 

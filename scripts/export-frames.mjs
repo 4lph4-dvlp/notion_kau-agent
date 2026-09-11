@@ -54,6 +54,119 @@ function die(msg) {
 
 const normalizeId = (id) => id.trim().replace('-', ':');
 
+const PORT = Number(process.env.FIGMA_BRIDGE_PORT || 3055);
+
+// ---------- bridge helpers ----------
+async function getBridgeHealth(port = PORT) {
+  try {
+    const res = await fetch(`http://localhost:${port}/agent/health`, {
+      signal: AbortSignal.timeout(1500),
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+async function runViaBridge(code, port = PORT) {
+  const res = await fetch(`http://localhost:${port}/agent/run`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code }),
+  });
+  if (!res.ok) throw new Error(`Bridge HTTP ${res.status}`);
+  return await res.json();
+}
+
+async function listFileViaBridge(port = PORT) {
+  console.log('[bridge] Figma 데스크톱 플러그인을 통해 파일 구조를 조회합니다...');
+  const code = `
+    await figma.loadAllPagesAsync();
+    return {
+      name: figma.root.name,
+      pages: figma.root.children.map(p => ({
+        name: p.name,
+        id: p.id,
+        children: (p.children || []).map(c => ({
+          name: c.name,
+          id: c.id,
+          w: Math.round(c.width || 0),
+          h: Math.round(c.height || 0)
+        }))
+      }))
+    };
+  `;
+  const resp = await runViaBridge(code, port);
+  if (!resp.ok) die(`브리지 파일 조회 실패: ${resp.error}`);
+  const data = typeof resp.result === 'string' ? JSON.parse(resp.result) : resp.result;
+
+  console.log(`\n파일: ${data.name}\n`);
+  for (const page of data.pages ?? []) {
+    console.log(`[페이지] ${page.name}  (${page.id})`);
+    for (const child of page.children ?? []) {
+      const size = child.w && child.h ? ` ${child.w}×${child.h}` : '';
+      console.log(`   ${child.id.padEnd(12)} ${child.name}${size}`);
+    }
+    console.log('');
+  }
+}
+
+async function exportNodesViaBridge(entries, outDir, { scale, format }, port = PORT) {
+  console.log('[bridge] Figma 데스크톱 플러그인(Agent Bridge)으로 내보냅니다 (토큰 불필요)...');
+  await mkdir(outDir, { recursive: true });
+
+  const fmt = format.toUpperCase();
+  const scaleNum = Number(scale) || 1;
+
+  const code = `
+    const entries = ${JSON.stringify(entries)};
+    const results = [];
+    for (const entry of entries) {
+      const node = await figma.getNodeByIdAsync(entry.id);
+      if (!node) {
+        results.push({ name: entry.name, id: entry.id, error: '노드를 찾을 수 없음' });
+        continue;
+      }
+      if (typeof node.exportAsync !== 'function') {
+        results.push({ name: entry.name, id: entry.id, error: '내보낼 수 없는 노드 타입: ' + node.type });
+        continue;
+      }
+      const bytes = await node.exportAsync({
+        format: '${fmt}',
+        constraint: { type: 'SCALE', value: ${scaleNum} }
+      });
+      results.push({
+        name: entry.name,
+        id: entry.id,
+        b64: figma.base64Encode(bytes),
+        w: Math.round(node.width),
+        h: Math.round(node.height),
+        byteLength: bytes.length
+      });
+    }
+    return results;
+  `;
+
+  const resp = await runViaBridge(code, port);
+  if (!resp.ok) die(`브리지 렌더 실패: ${resp.error}`);
+
+  const results = typeof resp.result === 'string' ? JSON.parse(resp.result) : resp.result;
+  let ok = 0;
+  for (const r of results) {
+    if (r.error) {
+      console.warn(`  ! ${r.name} (${r.id}) — ${r.error}`);
+      continue;
+    }
+    const buf = Buffer.from(r.b64, 'base64');
+    const dest = path.join(outDir, `${r.name}.${format.toLowerCase()}`);
+    await writeFile(dest, buf);
+    console.log(`  ✓ ${path.relative(ROOT, dest)}  (${(buf.length / 1024).toFixed(0)} KB) [${r.w}×${r.h}]`);
+    ok++;
+  }
+  console.log(`\n${ok}/${entries.length} 개 내보냄 → ${path.relative(ROOT, outDir)}\n`);
+}
+
 async function figma(url, token) {
   const res = await fetch(url, { headers: { 'X-Figma-Token': token } });
   if (!res.ok) {
@@ -140,29 +253,53 @@ const args = parseArgs(process.argv.slice(2));
 
 const token = process.env.FIGMA_TOKEN;
 const fileKey = process.env.FIGMA_FILE_KEY;
-if (!token) die('FIGMA_TOKEN 이 없다. .env.example 을 .env 로 복사하고 값을 채울 것.');
-if (!fileKey) die('FIGMA_FILE_KEY 가 없다. 파일 URL 의 /design/<KEY>/ 부분이다.');
+
+const health = await getBridgeHealth(PORT);
+const useBridge = Boolean(health && health.pluginConnected);
+
+if (!useBridge) {
+  if (!token) {
+    die(
+      'Figma 데스크톱에서 Agent Bridge 플러그인이 실행되어 있지 않습니다.\n' +
+      '  → Figma 데스크톱 앱에서 작업할 파일을 열고 Plugins → Development → Agent Bridge 를 실행할 것.'
+    );
+  }
+  if (!fileKey) die('FIGMA_FILE_KEY 가 없다. 파일 URL 의 /design/<KEY>/ 부분이다.');
+}
 
 if (args.list) {
-  await listFile(fileKey, token);
+  if (useBridge) {
+    await listFileViaBridge(PORT);
+  } else {
+    await listFile(fileKey, token);
+  }
 } else if (args.slug) {
   const entries = await readNodesFromPost(args.slug);
-  await exportNodes(entries, path.join(ROOT, 'exports', args.slug), {
-    fileKey, token, scale: args.scale, format: args.format,
-  });
+  const outDir = path.join(ROOT, 'exports', args.slug);
+  if (useBridge) {
+    await exportNodesViaBridge(entries, outDir, { scale: args.scale, format: args.format }, PORT);
+  } else {
+    await exportNodes(entries, outDir, { fileKey, token, scale: args.scale, format: args.format });
+  }
 } else if (args.ids) {
   const entries = args.ids.split(',').filter(Boolean).map((id, i) => ({
     name: String(i + 1).padStart(2, '0'),
     id: normalizeId(id),
   }));
-  await exportNodes(entries, path.resolve(ROOT, args.out ?? 'exports/tmp'), {
-    fileKey, token, scale: args.scale, format: args.format,
-  });
+  const outDir = path.resolve(ROOT, args.out ?? 'exports/tmp');
+  if (useBridge) {
+    await exportNodesViaBridge(entries, outDir, { scale: args.scale, format: args.format }, PORT);
+  } else {
+    await exportNodes(entries, outDir, { fileKey, token, scale: args.scale, format: args.format });
+  }
 } else {
   console.log(`
 사용법
   node scripts/export-frames.mjs --list
   node scripts/export-frames.mjs --slug <slug> [--scale 1] [--format png]
   node scripts/export-frames.mjs --ids 12:345,12:346 --out exports/tmp
+
+안내
+  Figma 데스크톱에서 Agent Bridge 플러그인이 실행 중이면 토큰 없이 바로 내보내집니다.
 `);
 }

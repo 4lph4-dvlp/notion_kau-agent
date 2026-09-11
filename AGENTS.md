@@ -11,16 +11,29 @@ Figma 작업을 시작하기 전에 반드시 이 문서를 읽고, 아래 규�
 ## 1. 시스템 구조
 
 ```
+Notion «콘텐츠 기획» DB      ← 기획·조사·이미지 계획. 게시물 하나 = 페이지 하나
+      │  /content-plan
+      ▼
+repo  content/posts/<slug>.md ← 확정 카피 스냅샷 (git 이력)
+      │  /instagram-post
+      ▼
 Figma 파일 1개 (무료 플랜이므로 라이브러리 게시 불가 → 반드시 단일 파일)
 ├─ 페이지 01_Assets     ← 디자인 시스템. 마스터 컴포넌트 + 변수 + 스타일
 └─ 페이지 02_Workspace  ← 실제 게시물. 01_Assets 의 컴포넌트 인스턴스만 배치
+      │
+      ▼
+Notion 같은 페이지 «6. 디자인 결과» ← 노드 ID · 내보낸 파일 (되돌려 기록)
 ```
 
 - **Assets = 원본, Workspace = 조립.** 이 방향은 절대 역전되지 않는다.
 - Workspace에서 만든 것을 Assets로 승격하려면 사람이 명시적으로 요청해야 한다.
+- **기획 = Notion, 조립 = Figma.** 카피의 정본은 Notion 기획 문서다. Figma 단계에서
+  카피를 지어내거나 몰래 고치지 않는다. 고칠 것이 있으면 Notion을 고치고 다시 내려받는다.
 
 연결 정보(파일 키, 페이지 ID, 컴포넌트 키)는 `design/figma-file.json`에 기록한다.
-작업 전 이 파일을 먼저 읽고, 새 노드를 만들면 여기에 ID를 갱신한다.
+Notion 쪽(DB ID, workspace)은 `content/notion.json`에 기록한다.
+작업 전 이 두 파일을 먼저 읽고, 새 노드나 새 DB를 만들면 여기에 ID를 갱신한다.
+기획 문서의 구조와 파싱 규칙은 `design/content-plan.md`에 있다.
 
 **디자인 기준은 Notion 브랜드다.** 색·서체의 근거와 사용 규칙은 `design/brand.md`에 있다.
 값을 바꾸거나 새 색을 쓰고 싶으면 그 문서를 먼저 읽는다.
@@ -47,6 +60,11 @@ Figma 파일 1개 (무료 플랜이므로 라이브러리 게시 불가 → 반�
    작업 시작 전 `02_Workspace`의 기존 섹션 목록을 확인하고, 새 섹션은 겹치지 않는 이름으로
    캔버스의 빈 자리에 만든다. 같은 `YYYY-MM-DD_<slug>` 섹션이 이미 있으면 이어서 쓰지 말고
    사용자에게 먼저 확인한다.
+8. **카피의 정본은 Notion 기획 문서다.** 디자인 단계에서 카피를 새로 지어내거나 규격 위반을
+   저장소에서 몰래 고치지 않는다. 고칠 것을 찾으면 보고하고, 사용자 판단으로 Notion을 고친 뒤
+   다시 내려받는다. Notion과 저장소가 갈라지는 것이 가장 나쁜 상태다.
+9. **출처 없는 사실은 카드에 넣지 않는다.** 노션 기능은 공식 도움말로 확인한다.
+   기억으로 쓰지 않는다. 근거는 기획 문서 «2. 조사»에 링크로 남긴다.
 
 ---
 
@@ -58,15 +76,25 @@ Figma 파일 1개 (무료 플랜이므로 라이브러리 게시 불가 → 반�
 3. 만든 컴포넌트의 이름과 키를 `design/figma-file.json`에 기록한다.
 4. 마지막에 무엇을 만들었는지 **목록으로 보고**한다. 스크린샷 확인을 요청한다.
 
-### B. 게시물 제작 (`02_Workspace`)
-1. 입력 브리프를 읽는다: `content/briefs/<slug>.md`
+### B. 콘텐츠 기획 (Notion) — `/content-plan`
+1. `design/content-plan.md`(기획 문서 규격)와 `design/formats.md`를 읽는다.
+2. Notion DB의 기존 행을 조회해 **주제 중복**과 톤 일관성을 점검한다.
+3. 조사한다. 사실은 출처 링크와 함께, 조판 레퍼런스는 노션 공식 SNS(`@notionhq`·`@notionhq_kr`)에서.
+4. DB에 행을 만들고 본문을 스켈레톤 그대로 채운다. **카드별 카피와 `showImage`를 여기서 확정한다.**
+5. `design/formats.md`의 글자 수·톤 규격을 직접 세어 검증한다. 디자인 단계에서 되돌아오는 것이 가장 비싸다.
+6. 상태를 `기획완료`로 올리고 링크와 함께 보고한다.
+
+### C. 게시물 제작 (`02_Workspace`) — `/instagram-post`
+1. Notion 기획 문서를 `slug`로 찾아 읽는다. **`상태`가 `기획완료` 미만이면 거부하고 기획을 먼저 시킨다.**
 2. `design/formats.md`에서 해당 포맷(카드뉴스/포스트/스토리)의 규격을 확인한다.
-3. **카피를 먼저 확정한다.** 카드별 텍스트를 `content/posts/<slug>.md`에 쓰고 사용자 확인을 받는다.
+3. 확정 카피를 `content/posts/<slug>.md`로 내려받고 규격을 재검증한 뒤 **사용자 승인을 받는다.**
    → 디자인 생성 전에 카피 승인을 받는 것이 원칙이다. 캔버스 왕복 비용이 크기 때문이다.
 4. 승인 후 Figma에 인스턴스를 생성하고 텍스트를 채운다.
+   기획 문서의 **영문 소문자 키는 그대로 컴포넌트 프로퍼티로 들어간다**(`design/content-plan.md` 3항).
 5. 프레임을 스크린샷으로 확인한다. 넘침(overflow), 줄바꿈 깨짐, 안전영역 침범을 점검한다.
 6. 노드 ID를 `content/posts/<slug>.md` 하단 메타 블록에 기록한다.
 7. `node scripts/export-frames.mjs --slug <slug>` 로 PNG를 내보낸다.
+8. **Notion에 되돌려 기록한다.** «6. 디자인 결과»에 노드 ID·내보낸 파일, 상태는 `발행준비`로.
 
 ---
 
@@ -99,14 +127,52 @@ Figma 쓰기는 **로컬 브리지**(`figma_run` / `figma_status`)를 쓴다. �
 `Agent Bridge` 플러그인이 실행 중이어야 한다.
 
 > 공식 원격 MCP(`mcp.figma.com`)도 등록돼 있지만 **Starter 플랜은 월 20회**라
-> 이미 소진했다. 쓰지 말 것. 파일 구조 확인·PNG 내보내기는 REST(`scripts/export-frames.mjs`)로
-> 하면 한도와 무관하다.
+> 이미 소진했다. 쓰지 말 것. 파일 구조 확인·PNG 내보내기는 `Agent Bridge`(`scripts/export-frames.mjs`)로
+> 하면 한도와 토큰 없이 바로 내보낼 수 있다.
 
 - 작업 시작 전 `figma_status` 로 연결을 확인한다.
 - 작업 시작 전 현재 선택/페이지 상태를 조회해 **어디에 쓰는지 확인**한 뒤 쓴다.
 - 한 번에 거대한 생성 요청을 보내지 말고, **프레임 1개 → 확인 → 다음**으로 진행한다.
 - 생성 후에는 반드시 스크린샷/이미지로 결과를 확인한다. "만들었다"고만 보고하지 않는다.
 - 도구 호출이 실패하면 재시도 전에 원인을 확인한다. 같은 호출을 그대로 반복하지 않는다.
+
+### Notion
+
+기획 문서 읽기·쓰기는 **로컬 Notion MCP 서버**를 쓴다. 등록 이름은 보통 `notion`이고,
+실행 파일은 `scripts/notion-mcp.mjs`(공식 `@notionhq/notion-mcp-server` 런처)다.
+내부 통합 토큰(`.env`의 `NOTION_TOKEN`)으로 붙는다 — OAuth 없음, 계정 종속 없음.
+
+> 호스팅 서버(`mcp.notion.com`)로 등록돼 있을 수도 있다. 그쪽은 도구 이름이
+> `notion-search` · `notion-fetch` · `notion-create-pages` 계열이다.
+> **작업 시작 전 실제로 노출된 도구 이름을 확인하고 쓴다.** 아래 이름을 외워서 쓰지 않는다.
+
+로컬 서버(v2.x)의 주요 도구:
+
+| 하는 일 | 도구 |
+|---|---|
+| 검색 | `API-post-search` |
+| 페이지 본문을 **마크다운으로** 읽기 | `API-retrieve-page-markdown` |
+| 페이지 본문을 **마크다운으로** 쓰기 | `API-update-page-markdown` |
+| 페이지 생성 / 속성 수정 | `API-post-page` · `API-patch-page` |
+| DB 조회 (행 목록) | `API-query-data-source` |
+| DB 스키마 조회 / 수정 | `API-retrieve-a-data-source` · `API-update-a-data-source` |
+| DB 생성 | `API-create-a-data-source` (`parent.page_id`) |
+| DB 메타 + 데이터소스 ID | `API-retrieve-a-database` |
+
+**본문은 블록 JSON이 아니라 마크다운으로 다룬다.** 기획 문서 스켈레톤이 마크다운 헤딩
+구조라서 `API-retrieve-page-markdown` / `API-update-page-markdown` 한 쌍이면 충분하고,
+블록 단위로 쪼개는 것보다 토큰이 훨씬 적게 든다.
+
+- v2부터 DB 질의는 `database_id`가 아니라 **`data_source_id`**를 쓴다.
+  `content/notion.json`에 둘 다 기록돼 있다. 없으면 `API-retrieve-a-database`로 얻는다.
+- MCP가 안 붙어 있으면 사용자에게 설정을 요청하고 **멈춘다**(README 4.3).
+  대신 로컬에 기획 문서를 만들지 않는다. 산출물이 두 군데로 갈라진다.
+- 페이지가 안 보이면 대개 토큰이 아니라 **권한** 문제다. 내부 통합은 명시적으로 공유한
+  페이지만 본다. `node scripts/notion-mcp.mjs --check`로 토큰을 먼저 가려낸다.
+- **내가 만들지 않은 페이지를 고치지 않는다.** DB의 다른 행은 읽기만 한다.
+- `API-update-page-markdown`은 `replace_content`로 **본문 전체를 덮어쓴다.**
+  기존 내용을 날리지 않으려면 먼저 읽고, 합친 결과를 쓴다. 부분 수정은 `update_content`.
+- `상태`를 `카피승인`·`발행됨`으로 올리는 것은 **사람만** 한다.
 
 ---
 
