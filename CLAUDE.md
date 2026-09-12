@@ -19,7 +19,7 @@
 | `content/posts/` | 확정 카피 스냅샷 + 노드 ID (Notion에서 내려받음) |
 | `content/images/<slug>/` | 카드에 넣을 이미지 파일 |
 | `scripts/export-frames.mjs` | Agent Bridge를 통해 프레임 PNG 내보내기 (토큰 불필요) |
-| `scripts/notion-mcp.mjs` | Notion MCP 서버 런처 (`.env`의 `NOTION_TOKEN` 사용). `--check`로 연결 확인 |
+| `scripts/notion-mcp.mjs` | 로컬 레거시 Notion MCP 런처 (토큰 기반 fallback용). `--check`로 연결 확인 |
 
 ## 스킬
 
@@ -40,10 +40,10 @@
   Pretendard를 설치하면 전체를 그쪽으로 교체할 수 있다. 그 외 폰트를 임의로 고르지 않는다.
 - **콘텐츠의 정본은 Notion이다.** 디자인 단계에서 카피를 지어내거나 규격 위반을 저장소에서
   몰래 고치지 않는다. 고칠 것은 보고하고 Notion을 고친 뒤 다시 내려받는다.
-  Notion MCP(`notion` 서버)가 안 붙어 있으면 사용자에게 설정을 요청하고 멈춘다(README 4.3) —
-  로컬에 기획 문서를 대신 만들지 않는다. 토큰은 `.env`의 `NOTION_TOKEN` 하나이고
-  `node scripts/notion-mcp.mjs --check`로 가려낼 수 있다. **시작 전 실제 노출된 도구 이름을
-  확인한다** — 로컬 서버(`API-*`)와 호스팅 서버(`notion-*`)가 이름이 다르다.
+  Notion MCP(원격 `https://mcp.notion.com/mcp` 또는 로컬 fallback)가 안 붙어 있으면 사용자에게
+  설정을 요청하고 멈춘다(README 4.3) — 로컬에 기획 문서를 대신 만들지 않는다.
+  **시작 전 실제 노출된 도구 이름을 확인한다** — 원격 서버(`notion-*`)와 로컬 레거시 서버(`API-*`)가
+  이름이 다르다.
 - `design/figma-file.json`에 컴포넌트 키가 채워져 있으면 `01_Assets`는 **이미 구축된 것이다.**
   다시 만들지 말고 그 노드 ID를 쓴다. 레지스트리가 비어 있으면 자기 파일로 새로 구성하는
   경우(README 4.2 경로 B)이므로 `/figma-assets`로 먼저 구축한다.

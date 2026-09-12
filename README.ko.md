@@ -275,100 +275,56 @@ CLI가 없어서 설정 파일을 직접 고친다. 설치된 버전에 따라 �
 
 #### Notion (기획용)
 
-콘텐츠 기획은 Notion에 쓴다. 여기서 쓰는 건 **공식 로컬 서버**
-[`@notionhq/notion-mcp-server`](https://github.com/makenotion/notion-mcp-server)다.
-OAuth 없이 **내부 통합 토큰** 하나로 붙기 때문에,
+콘텐츠 기획은 Notion에 쓴다. 노션 공식 표준이자 에이전트에 최적화된 도구 세트를 제공하는
+**공식 원격 호스팅 MCP 서버**(`https://mcp.notion.com/mcp`)를 기본으로 사용한다.
 
-- **노션 계정이 Claude/OpenAI 계정과 달라도 상관없다.** 노션 쪽 자격증명만 쓴다
-- 세 에이전트에 **똑같은 방식**으로 등록된다 (전부 stdio)
-- 브라우저 로그인이 필요 없다
+- **노션 공식 지원 최신 서버**: `notion-search`, `notion-fetch`, `notion-create-pages`, `notion-update-page`, `notion-query-data-sources` 등 에이전트에 최적화된 도구 제공
+- **자동 업데이트**: 인프라 구축 없이 최신 기능이 자동 반영됨 (로컬 패키지는 공식 Deprecated)
+- **인증**: 최초 1회 브라우저 OAuth 로그인 승인
 
-**1. 내부 통합 만들기**
+**1. 각 에이전트에 원격 Notion MCP 등록**
 
-[notion.so/profile/integrations](https://www.notion.so/profile/integrations) → **New integration**
-→ 유형 **Internal**, 워크스페이스는 게시물을 관리할 곳으로 고른다.
-Capabilities는 **Read / Update / Insert content** 셋이면 충분하다. 사용자 정보 접근은 필요 없다.
+- **Claude Code**:
+  ```bash
+  claude mcp add --scope user --transport http notion https://mcp.notion.com/mcp
+  ```
+  등록 후 세션을 새로 시작하고 도구 호출 시 브라우저 OAuth 승인을 완료한다.
 
-시크릿(`ntn_...`)을 복사해 `.env`에 넣는다.
-
-```bash
-NOTION_TOKEN=ntn_xxxxxxxxxxxxxxxxxxxxx
-```
-
-**2. 통합에 페이지 권한 주기 — 이걸 빼먹으면 아무것도 안 보인다**
-
-내부 통합은 **명시적으로 공유한 페이지만** 본다. 기획 문서를 둘 상위 페이지를 열고
-**⋯ → 연결(Connections) → 방금 만든 통합**을 추가한다. 하위 페이지는 자동으로 상속된다.
-
-확인:
-
-```bash
-node scripts/notion-mcp.mjs --check
-```
-
-통합 이름과 ID가 나오면 성공이다.
-
-**3. 각 에이전트에 등록**
-
-토큰은 `.env`에만 두고, 세 클라이언트 모두 `scripts/notion-mcp.mjs`를 실행하게 한다.
-런처가 `.env`를 읽어 실제 서버에 넘긴다 — 토큰을 설정 파일 세 군데에 복사할 일이 없다.
-
-```bash
-# Claude Code
-claude mcp add --scope user notion -- node "<PROJECT>/scripts/notion-mcp.mjs"
-
-# Codex
-codex mcp add notion -- node "<PROJECT>/scripts/notion-mcp.mjs"
-```
-
-Antigravity는 `figma-bridge`와 같은 `mcp_config.json` 두 곳에 나란히 적는다.
-
-```json
-{
-  "mcpServers": {
-    "figma-bridge": {
-      "command": "node",
-      "args": ["<PROJECT>/bridge/server.mjs"]
-    },
-    "notion": {
-      "command": "node",
-      "args": ["<PROJECT>/scripts/notion-mcp.mjs"]
+- **Antigravity**:
+  `mcp_config.json`(`~/.gemini/antigravity/mcp_config.json` 및 `~/.gemini/config/mcp_config.json`)의 `notion` 항목에 `serverUrl`을 적는다.
+  ```json
+  {
+    "mcpServers": {
+      "figma-bridge": {
+        "command": "node",
+        "args": ["<PROJECT>/bridge/server.mjs"]
+      },
+      "notion": {
+        "serverUrl": "https://mcp.notion.com/mcp"
+      }
     }
   }
-}
-```
+  ```
+  저장 후 Antigravity에서 Notion 도구 호출 시 브라우저 OAuth 인증이 진행된다.
+  (Antigravity MCP 갤러리의 "Notion" 커넥터는 옛 패키지를 쓰므로 쓰지 말고, 위와 같이 커스텀 서버로 등록할 것 — 노션 공식 문서 권고다.)
 
-첫 실행 때 `npx`가 서버 패키지를 내려받느라 몇 초 걸린다. 런처는 버전을
-**`@2.5.1`로 고정**해서 띄운다 — `npx`가 캐시에 있는 옛 버전을 그냥 쓰는 일이 있는데,
-2.4 미만에는 기획 문서를 마크다운으로 읽고 쓰는 도구가 없다.
-올리려면 `.env`에 `NOTION_MCP_PACKAGE=@notionhq/notion-mcp-server@<버전>`을 적는다.
+- **Codex**:
+  ```bash
+  codex mcp add notion --url https://mcp.notion.com/mcp
+  ```
+  (stdio 전용 클라이언트의 경우 `npx -y mcp-remote https://mcp.notion.com/mcp` 로 등록)
 
-**4. DB 만들기**
+**2. DB 만들기**
 
-첫 `/content-plan` 실행 때 에이전트가 «콘텐츠 기획» 데이터베이스를 만들 상위 페이지를 묻는다
-(2번에서 공유한 그 페이지다). 만들어진 DB의 ID는 `content/notion.json`에 기록된다 —
-Figma 쪽 `design/figma-file.json`과 같은 역할이다.
+첫 `/content-plan` 실행 때 에이전트가 «콘텐츠 기획» 데이터베이스를 만들 상위 페이지를 묻는다.
+만들어진 DB의 ID는 `content/notion.json`에 기록된다 — Figma 쪽 `design/figma-file.json`과 같은 역할이다.
 
-> **왜 호스팅 서버(`mcp.notion.com`)를 안 쓰나**
+> **로컬 토큰 기반 서버 fallback (무인 환경용)**
 >
-> 노션이 권장하는 건 호스팅 서버 쪽이고 도구도 더 좋다(`notion-search`, `notion-fetch` 등).
-> 하지만 **OAuth만 지원하고 토큰 인증이 안 된다.** 에이전트 셋에서 각각 브라우저 로그인을
-> 해야 하고, 헤드리스로 돌릴 수 없다. 이 프로젝트는 `.env` 토큰 하나로 세 에이전트가
-> 똑같이 도는 쪽이 맞다.
->
-> 반대로 로컬 서버는 **노션이 "더 이상 활발히 유지보수하지 않는다"고 명시**한 패키지다.
-> 지금은 잘 돌고 기능도 다 있지만, 언젠가 막히면 호스팅 서버로 갈아타면 된다:
->
-> ```bash
-> claude mcp add --scope user --transport http notion https://mcp.notion.com/mcp
-> codex   mcp add notion --url https://mcp.notion.com/mcp
-> ```
->
-> Antigravity는 `{"notion": {"serverUrl": "https://mcp.notion.com/mcp"}}`.
-> 셋 다 브라우저 OAuth를 따로 통과해야 한다. 이때 로그인하는 건 **노션 계정**이라
-> Claude 계정과 다른 건 여전히 문제가 안 된다.
-> (Antigravity MCP 갤러리의 "Notion" 커넥터는 옛 패키지를 쓰므로 쓰지 말고
-> 커스텀 서버로 등록할 것 — 노션 공식 문서 권고다.)
+> 브라우저 OAuth를 사용할 수 없는 무인 환경이거나 내부 통합 시크릿(`NOTION_TOKEN`)을 사용해야 하는 경우,
+> 레거시 로컬 패키지 런처(`scripts/notion-mcp.mjs`)를 대안으로 쓸 수 있다:
+> - `scripts/notion-mcp.mjs --check` 로 토큰 및 페이지 공유 권한 확인
+> - 단, `@notionhq/notion-mcp-server`는 노션에서 공식적으로 유지보수를 중단(deprecated)했으므로 대화형 환경에서는 원격 서버를 권장한다.
 
 ### 4.4 Figma 플러그인 설치
 
@@ -392,9 +348,12 @@ Figma 쪽 `design/figma-file.json`과 같은 역할이다.
 
 ```bash
 FIGMA_FILE_KEY=l4iUTnc5fRX9vPDLSY8eDI   # A: 그대로 둔다 / B: 내 파일 키로 바꾼다
-NOTION_TOKEN=ntn_xxxxxxxxxxxxxxxxxxxxx  # 4.3에서 발급받은 노션 시크릿
+# NOTION_TOKEN=ntn_xxxxxxxxxxxxxxxxxxx # 선택: 로컬 fallback 런처 사용 시에만 필요 (원격 MCP는 OAuth 사용)
 ```
 
+> **Notion 인증**: 원격 호스팅 MCP(`https://mcp.notion.com/mcp`)는 브라우저 OAuth 인증을
+> 사용하므로 `.env`에 `NOTION_TOKEN`을 넣을 필요가 없습니다. 무인/토큰 기반으로 로컬 fallback
+> 런처를 실행할 때만 `NOTION_TOKEN`이 필요합니다.
 > **Figma 개인 액세스 토큰은 필요 없다.** PNG 내보내기와 프레임 검수는 데스크톱에서
 > 실행 중인 `Agent Bridge` 플러그인을 통해 직접 수행된다.
 > `FIGMA_FILE_KEY`는 `design/figma-file.json`의 `fileKey`와 **항상 같은 값**이어야 한다 —

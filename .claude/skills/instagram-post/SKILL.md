@@ -23,9 +23,10 @@ slug가 없으면 Notion DB에서 `기획완료` 이상인 행 목록을 보여�
 ## 1단계 — 기획 문서 읽기 (Figma 접근 전)
 
 Notion DB에서 `slug`로 행을 찾아 페이지 본문을 가져온다.
-본문은 **마크다운으로 읽는다** — 로컬 서버면 `API-retrieve-page-markdown`,
-호스팅 서버면 `notion-fetch`. 시작 전 실제 노출된 도구 이름을 확인한다(`AGENTS.md` 5항).
-행 검색은 `API-query-data-source`에 `content/notion.json`의 `dataSourceId`를 쓴다.
+본문은 **마크다운으로 읽는다**:
+- 원격 서버: `notion-fetch` (페이지 ID/URL로 본문 마크다운 조회), 행 검색은 `notion-query-data-sources` (`mode: "rows"`)
+- 로컬 서버 fallback: `API-retrieve-page-markdown`, 행 검색은 `API-query-data-source`
+시작 전 실제 노출된 도구 이름을 확인한다(`AGENTS.md` 5항).
 
 **시작 조건을 확인한다:**
 - `상태`가 `기획완료` 이상인가 → 아니면 **거부하고** `/content-plan <slug>`를 먼저 하도록 안내한다
@@ -155,12 +156,12 @@ node scripts/export-frames.mjs --slug <slug>
 기획 문서로 돌아가 결과를 적는다. 이걸 빼먹으면 Notion만 보는 사람은 진행 상황을 모른다.
 
 - DB 속성 `Figma 섹션` = `YYYY-MM-DD_<slug>`, `내보내기 경로` = `exports/<slug>/`,
-  `상태`를 `발행준비`로 (`API-patch-page`). `발행됨`은 **사람만** 올린다
+  `상태`를 `발행준비`로 (`notion-update-page` 또는 로컬 `API-patch-page`). `발행됨`은 **사람만** 올린다
 - 본문 `## 6. 디자인 결과`에 Figma 섹션 이름 · 노드 ID 목록 · 내보낸 파일 목록
 
-본문을 고칠 때는 **`## 6. 디자인 결과` 섹션만** 바꾼다. `replace_content`로 통째로 덮어쓰면
-사람이 그 사이 고쳐둔 내용이 날아간다. 먼저 읽고(`API-retrieve-page-markdown`) 해당 섹션만
-치환한 전체 본문을 쓰거나, `update_content`로 그 부분만 찾아 바꾼다.
+본문을 고칠 때는 **`## 6. 디자인 결과` 섹션만** 바꾼다. 다른 섹션을 덮어쓰지 않도록
+먼저 읽고(`notion-fetch` 또는 `API-retrieve-page-markdown`) 해당 섹션만 치환한 본문을 쓰거나(`notion-update-page`),
+합친 결과를 쓴다. 사람이 그 사이 고쳐둔 내용을 날리지 않는다.
 
 최종 보고: 파일 목록 · 캡션 · Notion 페이지 링크 · 사람이 확인해야 할 항목.
 

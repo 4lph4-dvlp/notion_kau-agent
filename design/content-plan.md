@@ -20,9 +20,9 @@ Notion  같은 페이지 «6. 디자인 결과»  노드 ID · 내보낸 파일 
 `design/figma-file.json`이 Figma 쪽에서 하는 역할과 같다. MCP 설치는 README 4.3.
 
 **본문은 마크다운으로 읽고 쓴다.** 아래 스켈레톤이 마크다운 헤딩 구조인 이유가 이것이다 —
-`API-retrieve-page-markdown` / `API-update-page-markdown` 한 쌍이면 페이지 전체를 다룰 수 있고,
-블록 JSON을 쪼개는 것보다 토큰이 훨씬 적게 든다. 쓸 때는 **먼저 읽고 합쳐서** 쓴다.
-`replace_content`는 본문을 통째로 덮어쓰기 때문에 사람이 적어둔 내용이 날아간다.
+원격 서버의 `notion-fetch` / `notion-update-page` (또는 로컬의 `API-retrieve-page-markdown` / `API-update-page-markdown`)를
+통해 페이지 전체를 다룰 수 있고, 블록 JSON을 쪼개는 것보다 토큰이 훨씬 적게 든다.
+수정할 때는 **먼저 읽고 합쳐서** 쓴다. 통째로 덮어쓰거나 매칭되지 않는 부분 치환으로 인해 사람이 적어둔 내용이 날아가지 않도록 주의한다.
 
 ---
 

@@ -42,10 +42,10 @@ Antigravity는 `.agents/skills/`를 통해 다음 스킬을 자동 인식한다:
    - 작업 전 항상 `figma_status`로 연결 상태 확인.
 
 2. **Notion 연동**:
-   - `notion` 로컬 서버 도구군 (`API-*`) 사용.
-   - 페이지 본문은 마크다운(`API-retrieve-page-markdown`, `API-update-page-markdown`)으로 읽고 쓴다 (블록 JSON 쓰지 않음).
-   - DB 행 조회는 `API-query-data-source` (인자: `data_source_id`).
-   - `scripts/notion-mcp.mjs --check`로 권한 및 연결 상태 사전 검증 가능.
+   - 공식 원격 Notion MCP 서버(`https://mcp.notion.com/mcp`) 도구군(`notion-*`) 사용 (환경에 따라 로컬 레거시 `API-*` 도구 지원).
+   - 페이지 본문 및 DB 조회: `notion-fetch`, `notion-query-data-sources` (로컬: `API-retrieve-page-markdown`, `API-query-data-source`).
+   - 페이지 생성 및 수정: `notion-create-pages`, `notion-update-page` (로컬: `API-post-page`, `API-update-page-markdown`).
+   - 블록 JSON을 직접 다루지 않고 마크다운으로 읽고 쓴다.
 
 3. **조사 및 사실 확인**:
    - 노션 관련 사실 조사는 노션 공식 도움말 및 `exa` 도구를 적극 활용.

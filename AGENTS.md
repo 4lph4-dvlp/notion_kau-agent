@@ -138,40 +138,33 @@ Figma 쓰기는 **로컬 브리지**(`figma_run` / `figma_status`)를 쓴다. �
 
 ### Notion
 
-기획 문서 읽기·쓰기는 **로컬 Notion MCP 서버**를 쓴다. 등록 이름은 보통 `notion`이고,
-실행 파일은 `scripts/notion-mcp.mjs`(공식 `@notionhq/notion-mcp-server` 런처)다.
-내부 통합 토큰(`.env`의 `NOTION_TOKEN`)으로 붙는다 — OAuth 없음, 계정 종속 없음.
+기획 문서 읽기·쓰기는 **공식 원격 Notion MCP 서버(`https://mcp.notion.com/mcp`)**를 기본으로 쓴다.
+(토큰 기반 환경에서는 로컬 런처 `scripts/notion-mcp.mjs`가 fallback으로 사용될 수 있다.)
 
-> 호스팅 서버(`mcp.notion.com`)로 등록돼 있을 수도 있다. 그쪽은 도구 이름이
-> `notion-search` · `notion-fetch` · `notion-create-pages` 계열이다.
-> **작업 시작 전 실제로 노출된 도구 이름을 확인하고 쓴다.** 아래 이름을 외워서 쓰지 않는다.
+> **작업 시작 전 실제로 노출된 도구 이름을 확인하고 쓴다.**
+> 원격 서버(`notion-*`)와 로컬 레거시 서버(`API-*`)에 따라 도구명이 다르다.
 
-로컬 서버(v2.x)의 주요 도구:
+주요 도구 매핑:
 
-| 하는 일 | 도구 |
-|---|---|
-| 검색 | `API-post-search` |
-| 페이지 본문을 **마크다운으로** 읽기 | `API-retrieve-page-markdown` |
-| 페이지 본문을 **마크다운으로** 쓰기 | `API-update-page-markdown` |
-| 페이지 생성 / 속성 수정 | `API-post-page` · `API-patch-page` |
-| DB 조회 (행 목록) | `API-query-data-source` |
-| DB 스키마 조회 / 수정 | `API-retrieve-a-data-source` · `API-update-a-data-source` |
-| DB 생성 | `API-create-a-data-source` (`parent.page_id`) |
-| DB 메타 + 데이터소스 ID | `API-retrieve-a-database` |
+| 하는 일 | 원격 서버 (`mcp.notion.com`) | 로컬 서버 (v2.x fallback) |
+|---|---|---|
+| 검색 | `notion-search` / `notion-ai-search` | `API-post-search` |
+| 페이지 본문/데이터 읽기 | `notion-fetch` | `API-retrieve-page-markdown` |
+| 페이지 생성 | `notion-create-pages` | `API-post-page` |
+| 페이지 속성/본문 수정 | `notion-update-page` | `API-update-page-markdown` · `API-patch-page` |
+| DB 조회 (행 목록) | `notion-query-data-sources` (`mode: "rows"`) | `API-query-data-source` |
+| DB 생성 / 스키마 수정 | `notion-create-database` / `notion-update-data-source` | `API-create-a-data-source` / `API-update-a-data-source` |
 
 **본문은 블록 JSON이 아니라 마크다운으로 다룬다.** 기획 문서 스켈레톤이 마크다운 헤딩
-구조라서 `API-retrieve-page-markdown` / `API-update-page-markdown` 한 쌍이면 충분하고,
-블록 단위로 쪼개는 것보다 토큰이 훨씬 적게 든다.
+구조라서 원격의 `notion-fetch` / `notion-update-page` (또는 로컬의 `API-retrieve-page-markdown` / `API-update-page-markdown`)로
+충분하며, 블록 단위로 쪼개는 것보다 토큰이 훨씬 적게 든다.
 
-- v2부터 DB 질의는 `database_id`가 아니라 **`data_source_id`**를 쓴다.
-  `content/notion.json`에 둘 다 기록돼 있다. 없으면 `API-retrieve-a-database`로 얻는다.
+- 원격 서버는 OAuth 기반이므로 Notion 브라우저 인증이 필요하다.
+- DB 질의는 `content/notion.json`에 기록된 `id` 또는 `dataSourceId` / URL을 쓴다.
 - MCP가 안 붙어 있으면 사용자에게 설정을 요청하고 **멈춘다**(README 4.3).
   대신 로컬에 기획 문서를 만들지 않는다. 산출물이 두 군데로 갈라진다.
-- 페이지가 안 보이면 대개 토큰이 아니라 **권한** 문제다. 내부 통합은 명시적으로 공유한
-  페이지만 본다. `node scripts/notion-mcp.mjs --check`로 토큰을 먼저 가려낸다.
 - **내가 만들지 않은 페이지를 고치지 않는다.** DB의 다른 행은 읽기만 한다.
-- `API-update-page-markdown`은 `replace_content`로 **본문 전체를 덮어쓴다.**
-  기존 내용을 날리지 않으려면 먼저 읽고, 합친 결과를 쓴다. 부분 수정은 `update_content`.
+- 페이지를 고칠 때는 기존 내용을 날리지 않으려면 먼저 읽고, 변경이 필요한 부분만 수정하거나 합쳐서 쓴다.
 - `상태`를 `카피승인`·`발행됨`으로 올리는 것은 **사람만** 한다.
 
 ---

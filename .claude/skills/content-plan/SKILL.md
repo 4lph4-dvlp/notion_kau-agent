@@ -21,25 +21,19 @@ description: 주제를 받아 조사하고, Notion «콘텐츠 기획» DB에 �
 
 ## 0단계 — 연결 확인
 
-**노출된 Notion MCP 도구 이름을 먼저 확인한다.** 등록된 서버에 따라 다르다.
+**노출된 Notion MCP 도구 이름을 먼저 확인한다.**
 
 | 등록된 서버 | 도구 이름 |
 |---|---|
-| 로컬 `scripts/notion-mcp.mjs` (기본) | `API-post-search` · `API-retrieve-page-markdown` · `API-query-data-source` … |
-| 호스팅 `mcp.notion.com` | `notion-search` · `notion-fetch` · `notion-create-pages` … |
+| 원격 호스팅 `https://mcp.notion.com/mcp` (표준 권장) | `notion-search` · `notion-fetch` · `notion-create-pages` · `notion-update-page` · `notion-query-data-sources` … |
+| 로컬 `scripts/notion-mcp.mjs` (레거시/토큰 fallback) | `API-post-search` · `API-retrieve-page-markdown` · `API-query-data-source` … |
 
 도구가 아예 없으면 **여기서 멈추고** 사용자에게 설정을 요청한다 (README 4.3).
 Notion 없이 기획 문서를 로컬에 만들지 않는다. 그렇게 하면 산출물이 두 군데로 갈라진다.
 
-호출이 401/403으로 실패하면 원인을 가려서 안내한다. 같은 호출을 반복하지 않는다.
-
-```bash
-node scripts/notion-mcp.mjs --check
-```
-
-- **토큰이 거부됨** → `.env`의 `NOTION_TOKEN`이 잘못됐다
-- **토큰은 통과, 페이지가 안 보임** → **권한** 문제다. 내부 통합은 명시적으로 공유한
-  페이지만 본다. 상위 페이지에서 ⋯ → 연결(Connections) → 통합 추가를 요청한다
+호출이 실패하면 원인을 가려서 안내한다. 같은 호출을 반복하지 않는다:
+- **원격 서버**: 브라우저에서 Notion OAuth 인증이 완료되었는지 확인 (첫 호출 시 브라우저 팝업 승인 필요).
+- **로컬 서버 fallback**: `node scripts/notion-mcp.mjs --check` 로 `.env` 토큰 및 상위 페이지 공유 권한 점검.
 
 `content/notion.json`의 `database.id`가 `null`이면 **DB가 아직 없다.**
 사용자에게 DB를 만들 상위 페이지를 물어보고(위에서 통합에 공유한 그 페이지다),
@@ -87,10 +81,12 @@ DB의 기존 행을 조회한다.
 DB에 행을 만들고(또는 기존 행을 열고) 본문을 `design/content-plan.md` 2항 스켈레톤 그대로 채운다.
 **제목 문자열과 순서를 바꾸지 않는다.** 디자인 단계가 이 구조에 기대어 읽는다.
 
-본문은 **블록 JSON이 아니라 마크다운으로** 쓴다 (`API-update-page-markdown`).
+본문은 **블록 JSON이 아니라 마크다운으로** 쓴다:
+- 원격 서버: `notion-create-pages` (생성 시 본문 및 속성 전달), `notion-update-page` (수정 시)
+- 로컬 서버 fallback: `API-post-page`, `API-update-page-markdown`
 스켈레톤이 마크다운 헤딩 구조라 그대로 들어가고, 블록을 쪼개는 것보다 훨씬 싸다.
-기존 페이지를 고칠 때는 `replace_content`가 본문 전체를 덮어쓰므로 **먼저 읽고**
-(`API-retrieve-page-markdown`) 합친 결과를 쓴다. 사람이 적어둔 내용을 날리지 않는다.
+기존 페이지를 고칠 때는 본문 내용을 덮어쓰거나 유실하지 않도록 **먼저 읽고**(`notion-fetch` 또는 `API-retrieve-page-markdown`)
+합친 결과를 쓴다. 사람이 적어둔 내용을 날리지 않는다.
 
 DB 속성을 먼저 정한다:
 - `slug` — `^[a-z0-9-]+$`, 기존 행과 중복 금지. repo·Figma·exports 전부 이 값을 쓴다

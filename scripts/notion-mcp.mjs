@@ -1,14 +1,11 @@
 #!/usr/bin/env node
 /**
- * Notion MCP 서버 런처. (의존성 없음 · Node 18+)
+ * Notion MCP 서버 런처 (로컬 레거시/토큰 전용 fallback). (의존성 없음 · Node 18+)
  *
- * 공식 로컬 서버 `@notionhq/notion-mcp-server` 를 stdio 로 띄우되,
- * 토큰은 이 저장소의 `.env`(NOTION_TOKEN)에서 읽는다.
- *
- * 이렇게 하는 이유: 에이전트가 셋(Claude Code · Codex · Antigravity)이라
- * 각 클라이언트 설정 파일에 토큰을 세 번 복사해두면 갱신할 때 반드시 어긋난다.
- * 세 클라이언트 모두 이 파일 하나를 실행하게 하고, 토큰은 `.env` 한 곳에만 둔다.
- * 브리지(`bridge/server.mjs`)를 등록하는 방식과 같은 모양이다.
+ * [참고] 노션 공식 권장 표준은 원격 호스팅 MCP 서버(https://mcp.notion.com/mcp)입니다.
+ * 오픈소스 패키지(@notionhq/notion-mcp-server)는 공식적으로 유지보수가 중단(deprecated)되었습니다.
+ * 이 런처는 OAuth 브라우저 로그인을 사용할 수 없거나 내부 통합 토큰(NOTION_TOKEN)을
+ * 사용해야 하는 무인/자동화 환경용 fallback으로 보존됩니다.
  *
  *   node scripts/notion-mcp.mjs            MCP 서버 (stdio). 클라이언트가 실행한다
  *   node scripts/notion-mcp.mjs --check    토큰이 살아있는지 확인하고 종료 (사람용)
